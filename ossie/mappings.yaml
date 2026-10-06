@@ -1,0 +1,45 @@
+version: "1.0.0"
+spec: "Apache-Ossie-OSI/v1"
+description: "DEPLOYTOUR Cross-Ontology Semantic Alignments (FIWARE <-> SEGITTUR)"
+
+mappings:
+  source_ontology:
+    name: "FIWARE Smart Data Models"
+    entity: "fiware_accommodations"
+  target_ontology:
+    name: "SEGITTUR / Schema.org"
+    entity: "segittur_destinos"
+
+  join_keys:
+    - source_attribute: "municipality_code"
+      target_attribute: "codigo_ine_municipio"
+      relationship: "exact_match"
+      semantic_type: "AdministrativeAreaINE"
+
+  spatial_alignment:
+    type: "Point2D"
+    coordinate_reference_system: "EPSG:4326"
+    source:
+      latitude: "latitude"
+      longitude: "longitude"
+    target:
+      latitude: "latitud"
+      longitude: "longitud"
+
+  taxonomy_alignments:
+    - source_category: "Hotel"
+      target_category: "AlojamientoHotelero"
+      alignment_type: "equivalent_to"
+      description: "Direct equivalence between FIWARE Hotel and SEGITTUR AlojamientoHotelero"
+    - source_category: "Camping"
+      target_category: "ZonaAcampada"
+      alignment_type: "equivalent_to"
+      description: "Direct equivalence between FIWARE Camping and SEGITTUR ZonaAcampada"
+    - source_category: "*"
+      target_category: "RecursoCultural"
+      alignment_type: "spatial_destination_context"
+      description: "Cultural resources situated in the municipality providing contextual tourism attractiveness"
+    - source_category: "*"
+      target_category: "EspacioNatural"
+      alignment_type: "spatial_destination_context"
+      description: "Natural park/beach spaces in the municipality providing destination value"

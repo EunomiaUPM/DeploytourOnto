@@ -1,0 +1,108 @@
+services:
+  data-generator:
+    build:
+      context: ./ingestion
+      dockerfile: Dockerfile
+    volumes:
+      - shared-data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "test -f /data/lakehouse_a_fiware/metadata/v1.metadata.json && test -f /data/lakehouse_b_segittur/metadata/v1.metadata.json || exit 1"]
+      interval: 1s
+      timeout: 2s
+      retries: 30
+      start_period: 2s
+
+  gravitino:
+    image: datastrato/gravitino:0.5.1
+    ports:
+      - "8090:8090"
+    volumes:
+      - shared-data:/data
+    depends_on:
+      data-generator:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8090/api/version || exit 1"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+      start_period: 5s
+
+  gravitino-init:
+    image: curlimages/curl:latest
+    volumes:
+      - ./gravitino/init_catalogs.sh:/init_catalogs.sh:ro
+    entrypoint: ["/bin/sh", "/init_catalogs.sh"]
+    environment:
+      - GRAVITINO_URL=http://gravitino:8090
+    depends_on:
+      gravitino:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "test -f /tmp/gravitino_init_done || exit 1"]
+      interval: 2s
+      timeout: 2s
+      retries: 30
+      start_period: 2s
+
+  mcp-server:
+    build:
+      context: ./mcp_server
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - shared-data:/data:ro
+      - ./ossie:/ossie:ro
+      - ./engine:/engine:ro
+    environment:
+      - DATA_DIR=/data
+      - OSSIE_DIR=/ossie
+      - ENGINE_DIR=/engine
+    depends_on:
+      data-generator:
+        condition: service_healthy
+      gravitino:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8000/health || exit 1"]
+      interval: 2s
+      timeout: 2s
+      retries: 20
+      start_period: 3s
+
+  gemma-agent:
+    build:
+      context: .
+      dockerfile: ./gemma_agent/Dockerfile
+    environment:
+      - MCP_SERVER_URL=http://mcp-server:8000
+    depends_on:
+      mcp-server:
+        condition: service_healthy
+    profiles:
+      - tools
+
+  verifier:
+    build:
+      context: .
+      dockerfile: ./verifier/Dockerfile
+    volumes:
+      - shared-data:/data:ro
+      - ./engine:/engine:ro
+    environment:
+      - GRAVITINO_URL=http://gravitino:8090
+      - MCP_SERVER_URL=http://mcp-server:8000
+      - DATA_DIR=/data
+      - ENGINE_DIR=/engine
+    depends_on:
+      gravitino-init:
+        condition: service_healthy
+      mcp-server:
+        condition: service_healthy
+    restart: "no"
+    profiles:
+      - test
+
+volumes:
+  shared-data:
