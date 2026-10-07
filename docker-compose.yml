@@ -90,6 +90,8 @@ services:
     volumes:
       - shared-data:/data:ro
       - ./engine:/engine:ro
+      - ./verifier/verify.py:/app/verify.py:ro
+      - ./gemma_agent:/app/gemma_agent:ro
     environment:
       - GRAVITINO_URL=http://gravitino:8090
       - MCP_SERVER_URL=http://mcp-server:8000

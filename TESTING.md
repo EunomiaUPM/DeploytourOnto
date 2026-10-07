@@ -107,9 +107,13 @@ ORDER BY tourism_pressure_index DESC;
 
 ---
 
-## 2. The 5 Automated Test Scenarios
+## 2. The 5 Automated Test Scenarios & Explanatory Traces
 
-The test suite (`gemma_agent/test_cases.py` and `verifier/verify.py`) executes 5 distinct scenarios through the Gemma LLM Agent and MCP Server.
+The test suite ([`verifier/verify.py`](file:///Users/jsalvachua/OntoDeployTour/verifier/verify.py) and [`gemma_agent/test_cases.py`](file:///Users/jsalvachua/OntoDeployTour/gemma_agent/test_cases.py)) is designed to output **detailed step-by-step explanatory traces** showing:
+1. **▶ QUÉ HACE:** The exact technical operation being executed (files verified, REST API queried, SQL run, or tool called).
+2. **▶ PARA QUÉ LO HACE:** The architectural, semantic, or business motivation behind the test.
+3. **[TRAZA]:** The raw intermediate observation received by the system or LLM.
+4. **✓ [RESULTADO]:** The specific assertions validated and success criteria.
 
 ```text
 +-----------------------------------------------------------------------------------+
