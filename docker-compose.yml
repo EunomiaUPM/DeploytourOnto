@@ -120,5 +120,16 @@ services:
     profiles:
       - test
 
+  duckdb-ossie-tester:
+    build:
+      context: .
+      dockerfile: ./test/Dockerfile
+    volumes:
+      - ./ossie/duckdb_ossie_model.json:/app/ossie/duckdb_ossie_model.json:ro
+      - ./test/test_duckdb_ossie.py:/app/test/test_duckdb_ossie.py:ro
+    profiles:
+      - test
+    restart: "no"
+
 volumes:
   shared-data:

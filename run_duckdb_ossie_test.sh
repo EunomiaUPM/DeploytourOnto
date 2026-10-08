@@ -17,16 +17,14 @@
 set -euo pipefail
 
 echo "================================================================================"
-echo "  DEPLOYTOUR: Running duckdb-ossie Community Extension Test (Dockerized)"
+echo "  DEPLOYTOUR: Running duckdb-ossie Test (100% Containerized via Docker Compose)"
+echo "  Service: duckdb-ossie-tester"
 echo "  Reference: https://github.com/iqea-ai/duckdb-ossie"
 echo "================================================================================"
 
-docker run --rm \
-  -v "$(pwd)":/app \
-  -w /app \
-  python:3.11-slim \
-  sh -c "pip install --no-cache-dir 'duckdb==1.5.5' > /dev/null && python3 test/test_duckdb_ossie.py"
+docker compose build duckdb-ossie-tester
+docker compose run --rm duckdb-ossie-tester
 
 echo "================================================================================"
-echo "  ✓ duckdb-ossie test execution completed successfully!"
+echo "  ✓ duckdb-ossie containerized test execution completed successfully!"
 echo "================================================================================"

@@ -50,8 +50,12 @@ The evaluation files on branch `feature/duckdb-ossie-test`:
    - Populates test tables with Spanish destination data.
    - Executes model parsing, vocabulary discovery, SQL compilation, query execution, and MCP resource publishing.
 
-3. **Docker Execution Script:** [`run_duckdb_ossie_test.sh`](file:///Users/jsalvachua/OntoDeployTour/run_duckdb_ossie_test.sh)
-   - Runs the evaluation test inside Docker with zero local toolchains required.
+3. **Dedicated Container Service:**
+   - [`test/Dockerfile`](file:///Users/jsalvachua/OntoDeployTour/test/Dockerfile): Packages DuckDB 1.5.5 and pre-caches `ossie` and `duckdb_mcp` community extensions inside the image.
+   - [`docker-compose.yml`](file:///Users/jsalvachua/OntoDeployTour/docker-compose.yml): Registers the `duckdb-ossie-tester` service under profile `test`.
+
+4. **Docker Execution Script:** [`run_duckdb_ossie_test.sh`](file:///Users/jsalvachua/OntoDeployTour/run_duckdb_ossie_test.sh)
+   - Runs `docker compose build duckdb-ossie-tester && docker compose run --rm duckdb-ossie-tester` for 100% containerized execution.
 
 ---
 
