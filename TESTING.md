@@ -281,3 +281,76 @@ Test any custom prompt via the Gemma Agent CLI:
 # Interactive REPL
 ./query.sh
 ```
+
+---
+
+## 4. Native DuckDB Apache Ossie Community Extension Testing (`duckdb-ossie`)
+
+In addition to our production FastAPI/FastMCP semantic bridge, branch `feature/duckdb-ossie-test` introduces an automated, containerized evaluation of the official **`duckdb-ossie`** community extension developed by [Iqea Technologies](https://github.com/iqea-ai/duckdb-ossie) alongside **`duckdb_mcp`**.
+
+### 4.1 Purpose of the Evaluation
+While DEPLOYTOUR's primary engine uses Python/FastMCP to federate Iceberg tables and provide full REST/JSON-RPC/SSE interfaces, `duckdb-ossie` embeds the semantic layer **directly inside DuckDB's C++ core**. Evaluating this extension allows us to verify:
+1. In-engine parsing of declarative Apache Ossie JSON models (`version: 0.2.0.dev0`).
+2. Automatic generation and compilation of SQL aggregations and GROUP BY clauses across multiple grains without manual SQL authoring (`ossie_compile`, `ossie_query`).
+3. Native publishing of semantic queries as MCP tools directly through DuckDB's `duckdb_mcp` community extension.
+
+### 4.2 The 6 Automated Test Steps
+
+The test suite ([`test/test_duckdb_ossie.py`](file:///Users/jsalvachua/OntoDeployTour/test/test_duckdb_ossie.py)) runs inside a dedicated Docker container (`duckdb-ossie-tester`):
+
+```text
++---------------------------------------------------------------------------------------------+
+|                           DUCKDB-OSSIE EVALUATION PIPELINE (6 STEPS)                        |
++---+--------------------------+------------------------------+-------------------------------+
+| # | Step Name                | Operation / SQL Call         | Verification Objective        |
++---+--------------------------+------------------------------+-------------------------------+
+| 1 | Extension Loading        | INSTALL/LOAD ossie, mcp      | Community registry binary ABI |
+| 2 | Table Initialization     | CREATE TABLE memory.main.*   | Dual ontology physical storage|
+| 3 | Model Parsing            | CALL ossie_load('model.json')| C++ schema validator check    |
+| 4 | Vocabulary Discovery     | ossie_datasets/metrics/rel() | Semantic catalog introspection|
+| 5 | Query Compilation & Exec | ossie_compile / ossie_query  | Multi-grain SQL synthesis     |
+| 6 | Native MCP Publishing    | PRAGMA mcp_publish_tool      | Direct MCP agent accessibility|
++---+--------------------------+------------------------------+-------------------------------+
+```
+
+#### Step 1: Install & Load Community Extensions
+* **Action:** Executes `INSTALL ossie FROM community; LOAD ossie;` and `INSTALL duckdb_mcp FROM community; LOAD duckdb_mcp;`.
+* **Why:** Verifies the pre-built community binaries for DuckDB v1.5.5 load successfully in a Linux container.
+
+#### Step 2: Initialize Physical Tables for Dual Ontologies
+* **Action:** Seeds in-memory DuckDB tables `fiware_accommodations` (6 rows) and `segittur_destinos` (4 rows) across Spanish tourist destinations (Madrid, Barcelona, Girona, Las Palmas).
+* **Why:** Supplies physical columnar data for the semantic datasets to bind against.
+
+#### Step 3: Parse and Validate Model (`ossie_load`)
+* **Action:** Executes `CALL ossie_load('/app/ossie/duckdb_ossie_model.json')`.
+* **Why:** Validates that DuckDB's C++ schema parser accepts our multi-dataset JSON definition with cross-ontology relationships and metric formulas.
+
+#### Step 4: Metadata & Vocabulary Discovery
+* **Action:** Queries `SELECT * FROM ossie_datasets()`, `ossie_fields()`, `ossie_metrics()`, and `ossie_relationships()`.
+* **Why:** Proves that an AI agent or downstream system can dynamically introspect available entities, metrics (`total_bed_capacity`, `total_monthly_visitors`, `estimated_monthly_expenditure_eur`), and the foreign key relationship (`municipality_code` $\leftrightarrow$ `codigo_ine_municipio`) without hardcoding table structures.
+
+#### Step 5: Multi-Grain Semantic Query Compilation & Execution
+* **Action:** 
+  - Calls `SELECT ossie_compile('total_bed_capacity', '["fiware_accommodations.municipality_code"]')` to inspect generated SQL.
+  - Calls `SELECT * FROM ossie_query('total_bed_capacity', '["fiware_accommodations.municipality_code"]')` to execute the query.
+  - Compiles and queries multi-metric calculations joining visitor counts and expenditure.
+* **Why:** Demonstrates that DuckDB autonomously plans the `GROUP BY` and metric aggregations across dimensions.
+
+#### Step 6: Native Model Context Protocol (MCP) Tool Publishing
+* **Action:** Executes:
+  ```sql
+  PRAGMA mcp_publish_query('metrics', 'SELECT * FROM ossie_metrics()', 'Lists semantic metrics');
+  PRAGMA mcp_publish_query('dimensions', 'SELECT * FROM ossie_fields()', 'Lists dimensions');
+  ```
+* **Why:** Proves that DuckDB can natively expose Ossie semantic catalog queries as MCP tools to LLMs without external Python web server middleware.
+
+### 4.3 Running the Containerized Test
+
+To run this evaluation in 100% containerized Docker isolation:
+
+```bash
+./run_duckdb_ossie_test.sh
+```
+
+For complete technical notes, differences with FastMCP, and version pinning considerations, see [DUCKDB_OSSIE_TEST.md](file:///Users/jsalvachua/OntoDeployTour/DUCKDB_OSSIE_TEST.md).
+

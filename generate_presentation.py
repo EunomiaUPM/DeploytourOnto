@@ -355,45 +355,75 @@ def create_deck(output_path="DEPLOYTOUR_PoC_Architecture_and_Testing.pptx"):
         add_card(s11, left, 1.8, 2.1, 5.0, title, [f"Tool: {tool}", desc], badge="Verified", border_color=C_EMERALD)
 
     # =========================================================================
-    # SLIDE 12: Deployment & Operational Developer Experience
+    # SLIDE 12: Native Apache Ossie Extension: duckdb-ossie Evaluation
     # =========================================================================
     s12 = prs.slides.add_slide(blank_layout)
-    add_header(s12, "Deployment & Operational Workflow", "DevOps & CLI")
+    add_header(s12, "Native Apache Ossie Extension: duckdb-ossie Evaluation", "Community Extension")
 
-    add_card(s12, 0.8, 1.8, 5.6, 5.0, "Mode 1: Split Architecture (Interactive)", [
+    add_card(s12, 0.8, 1.8, 3.6, 5.0, "C++ In-Engine Semantic Core", [
+        ("Iqea duckdb-ossie", "Official community extension ('INSTALL ossie FROM community;')."),
+        ("Embedded Execution", "Declarative Apache Ossie models parsed and evaluated directly in DuckDB core."),
+        ("Schema Validation", "CALL ossie_load validates JSON models (v0.2.0.dev0) and entity dimensions."),
+        ("Catalog Introspection", "Native functions: ossie_datasets(), ossie_fields(), ossie_metrics(), ossie_relationships().")
+    ], badge="Extension Core")
+
+    add_card(s12, 4.8, 1.8, 3.6, 5.0, "Autonomous SQL Planning", [
+        ("Multi-Grain Compilation", "ossie_compile autonomously generates GROUP BY and aggregations across dimensions."),
+        ("Semantic Query Execution", "ossie_query executes complex derived metric calculations without manual SQL."),
+        ("duckdb_mcp Integration", "Exposes semantic tools natively via PRAGMA mcp_publish_tool / query."),
+        ("Zero Middleware", "Enables direct LLM agent queries without requiring external web servers.")
+    ], badge="SQL Synthesis")
+
+    add_card(s12, 8.8, 1.8, 3.6, 5.0, "Containerized Verification", [
+        ("Docker Test Service", "Containerized service duckdb-ossie-tester in docker-compose.yml."),
+        ("ABI Compatibility", "Pinned to DuckDB 1.5.5 with pre-cached community extension binaries."),
+        ("Automated Test Runner", "./run_duckdb_ossie_test.sh validates all 6 lifecycle steps with code 0."),
+        ("Architectural Verdict", "Proven complement to FastMCP: ultra-fast in-engine compilation.")
+    ], badge="6/6 Steps Passed", border_color=C_EMERALD)
+
+    # =========================================================================
+    # SLIDE 13: Deployment & Operational Developer Experience
+    # =========================================================================
+    s13 = prs.slides.add_slide(blank_layout)
+    add_header(s13, "Deployment & Operational Workflow", "DevOps & CLI")
+
+    add_card(s13, 0.8, 1.8, 5.6, 5.0, "Execution Modes & Automated Tooling", [
         ("./start_infra.sh", "Starts data-generator, Gravitino, and MCP server in background."),
         ("./query.sh <prompt>", "Executes Gemma Agent one-shot query against running MCP server."),
-        ("./query.sh", "Launches interactive conversational REPL session."),
-        ("./run_tests.sh", "Runs test suite container against live infrastructure."),
+        ("./query.sh", "Launches interactive conversational REPL session with Gemma."),
+        ("./run_tests.sh", "Runs full 5-scenario Gemma test suite against live infrastructure."),
+        ("./run_duckdb_ossie_test.sh", "Runs containerized test for native duckdb-ossie C++ extension."),
         ("./stop_infra.sh", "Tears down containers and wipes volumes.")
     ], badge="Developer Workflow")
 
-    add_card(s12, 6.8, 1.8, 5.6, 5.0, "Mode 2: All-in-One CI/CD Execution", [
+    add_card(s13, 6.8, 1.8, 5.6, 5.0, "CI/CD & Container Portability", [
         ("./run.sh", "Single-command bootstrap, build, end-to-end verification and exit code 0."),
-        ("Portability", "100% Docker Compose based. Zero host toolchain dependencies."),
-        ("Verification", "Validates Iceberg metadata, Gravitino REST, DuckDB SQL, and 5 Gemma tests.")
+        ("100% Dockerized", "All services, agents, and test runners run inside Docker Compose."),
+        ("Zero Host Toolchains", "No local Python, Go, or DuckDB required on the developer host."),
+        ("Multi-Layer Verification", "Validates Iceberg metadata, Gravitino REST, DuckDB SQL, and Gemma LLM.")
     ], badge="CI/CD Pipeline")
 
     # =========================================================================
-    # SLIDE 13: Summary & Business Value
+    # SLIDE 14: Summary & Business Value
     # =========================================================================
-    s13 = prs.slides.add_slide(blank_layout)
-    add_header(s13, "Key Takeaways & Future Roadmap", "Strategic Value")
+    s14 = prs.slides.add_slide(blank_layout)
+    add_header(s14, "Key Takeaways & Future Roadmap", "Strategic Value")
 
-    add_card(s13, 0.8, 1.8, 3.6, 5.0, "Proven Results", [
+    add_card(s14, 0.8, 1.8, 3.6, 5.0, "Proven Results", [
         ("Zero-ETL Success", "Bridged conflicting schemas without copying data."),
         ("Standards Alignment", "Fully compliant with Apache Iceberg & Gravitino."),
         ("High Performance", "Sub-second federated SQL in DuckDB."),
+        ("Dual Semantic Support", "Verified FastMCP bridge and native duckdb-ossie C++ extension."),
         ("Agentic Accessibility", "Standard MCP interface enabling conversational AI.")
     ], badge="Accomplished")
 
-    add_card(s13, 4.8, 1.8, 3.6, 5.0, "Business Impact", [
+    add_card(s14, 4.8, 1.8, 3.6, 5.0, "Business Impact", [
         ("Tourism Sustainability", "Accurately computes tourism pressure and congestion risks."),
         ("Cross-Entity Trust", "Allows public and private entities to collaborate without sharing raw internal DBs."),
         ("Interoperability Blueprint", "Ready for deployment across Spanish smart destinations.")
     ], badge="Impact")
 
-    add_card(s13, 8.8, 1.8, 3.6, 5.0, "Future Roadmap", [
+    add_card(s14, 8.8, 1.8, 3.6, 5.0, "Future Roadmap", [
         ("Enterprise Storage", "Transition from local volume to S3/GCS object stores with Gravitino."),
         ("Live Stream Updates", "Continuous CDC ingestion into Iceberg tables."),
         ("Multi-Modal Dashboard", "Visual geospatial heatmaps embedded in agent responses.")

@@ -147,6 +147,7 @@ The repository provides a clean separation between **persistent infrastructure**
 | ./start_infra.sh  | Starts core infrastructure (data, Gravitino, MCP) in the bg. |
 | ./query.sh        | Runs Gemma Agent for ad-hoc queries or interactive REPL.     |
 | ./run_tests.sh    | Runs the 5 automated test scenarios against running infra.   |
+| ./run_duckdb_ossie_test.sh | Runs containerized test for native duckdb-ossie extension. |
 | ./stop_infra.sh   | Tears down infrastructure containers and cleans volumes.    |
 | ./run.sh          | Complete one-command CI/CD run (build, test, verify).        |
 +-------------------+--------------------------------------------------------------+
@@ -214,10 +215,35 @@ Tear down previous state, build all images, run full verification across all lay
 
 ---
 
+### 3.3 Mode 3: Native `duckdb-ossie` Community Extension Evaluation
+
+In addition to our production FastAPI/FastMCP server, we evaluated the official DuckDB community extension **`duckdb-ossie`** ([`iqea-ai/duckdb-ossie`](https://github.com/iqea-ai/duckdb-ossie)) alongside **`duckdb_mcp`** on git branch `feature/duckdb-ossie-test`.
+
+This extension compiles Apache Ossie semantic models (`version: 0.2.0.dev0`) directly into DuckDB's C++ engine, exposing functions such as `ossie_load`, `ossie_datasets`, `ossie_fields`, `ossie_metrics`, `ossie_relationships`, `ossie_compile`, and `ossie_query`.
+
+To run the containerized evaluation suite without installing DuckDB or local compilers:
+
+```bash
+./run_duckdb_ossie_test.sh
+```
+
+*What it validates inside Docker (`duckdb-ossie-tester`):*
+1. **Extension Loading:** Installs and loads `ossie` and `duckdb_mcp` from DuckDB's community repository (`duckdb==1.5.5`).
+2. **Schema Ingestion:** Initializes physical tables for FIWARE and SEGITTUR entities.
+3. **C++ Model Parsing:** Loads [`ossie/duckdb_ossie_model.json`](file:///Users/jsalvachua/OntoDeployTour/ossie/duckdb_ossie_model.json).
+4. **Metadata Discovery:** Introspects datasets, metrics, and foreign key relationships.
+5. **Autonomous Query Compilation:** Compiles multi-grain SQL via `ossie_compile` and executes queries via `ossie_query`.
+6. **Native MCP Publishing:** Exposes semantic tools and resources over MCP via `duckdb_mcp`.
+
+For comprehensive benchmarks and architecture comparisons, refer to [DUCKDB_OSSIE_TEST.md](file:///Users/jsalvachua/OntoDeployTour/DUCKDB_OSSIE_TEST.md).
+
+---
+
 ## 4. Documentation & Presentation Assets
 
-* **[TESTING.md](file:///Users/jsalvachua/OntoDeployTour/TESTING.md):** Deep-dive guide into cross-ontology join mechanics, SQL calculations, and the 5 automated test scenarios.
-* **[DEPLOYTOUR_PoC_Architecture_and_Testing.pptx](file:///Users/jsalvachua/OntoDeployTour/DEPLOYTOUR_PoC_Architecture_and_Testing.pptx):** Comprehensive 12-slide executive and technical PowerPoint presentation detailing the architecture, semantic alignment, and test results.
+* **[TESTING.md](file:///Users/jsalvachua/OntoDeployTour/TESTING.md):** Deep-dive guide into cross-ontology join mechanics, SQL calculations, the 5 Gemma test scenarios, and the native `duckdb-ossie` test suite.
+* **[DUCKDB_OSSIE_TEST.md](file:///Users/jsalvachua/OntoDeployTour/DUCKDB_OSSIE_TEST.md):** Dedicated technical evaluation report on the Iqea Technologies `duckdb-ossie` and `duckdb_mcp` community extensions.
+* **[DEPLOYTOUR_PoC_Architecture_and_Testing.pptx](file:///Users/jsalvachua/OntoDeployTour/DEPLOYTOUR_PoC_Architecture_and_Testing.pptx):** Comprehensive 14-slide executive and technical PowerPoint presentation detailing the architecture, semantic alignment, verification results, and `duckdb-ossie` evaluation.
 
 ---
 
@@ -225,21 +251,25 @@ Tear down previous state, build all images, run full verification across all lay
 
 ```text
 OntoDeployTour/
-├── docker-compose.yml              # Complete container topology (infra + agent + verifier)
+├── docker-compose.yml              # Complete container topology (infra + agent + verifier + ossie-test)
 ├── start_infra.sh                  # Starts background services and waits for health checks
 ├── stop_infra.sh                   # Clean teardown of all containers and volumes
 ├── query.sh                        # Natural language CLI / REPL interface for Gemma Agent
 ├── run_tests.sh                    # Automated test runner against running infrastructure
+├── run_duckdb_ossie_test.sh        # Containerized test runner for duckdb-ossie extension
 ├── run.sh                          # All-in-one CI/CD build & verify script
 ├── README.md                       # Comprehensive architecture and usage guide
 ├── TESTING.md                      # Detailed test cases & cross-ontology query mechanics
-├── DEPLOYTOUR_...pptx              # PowerPoint presentation artifact
+├── DUCKDB_OSSIE_TEST.md            # duckdb-ossie community extension evaluation report
+├── DEPLOYTOUR_...pptx              # PowerPoint presentation artifact (14 slides)
+├── generate_presentation.py        # Automated pptx presentation generator script
 ├── engine/
 │   └── federated_query.sql         # Core cross-ontology DuckDB SQL query
 ├── ossie/
-│   ├── datasets.yaml               # Apache Ossie dataset definitions
+│   ├── datasets.yaml               # Apache Ossie dataset definitions (FastMCP)
 │   ├── mappings.yaml               # FIWARE <-> SEGITTUR cross-ontology alignments
-│   └── metrics.yaml                # Derived tourism metrics definitions
+│   ├── metrics.yaml                # Derived tourism metrics definitions
+│   └── duckdb_ossie_model.json     # Native Apache Ossie JSON model (duckdb-ossie)
 ├── ingestion/
 │   ├── main.go                     # Go synthetic data generator (parquet-go)
 │   ├── bridge_iceberg.py           # PyIceberg metadata generator
@@ -255,6 +285,9 @@ OntoDeployTour/
 │   ├── cli.py                      # Interactive & one-shot CLI entrypoint
 │   ├── test_cases.py               # 5 automated test scenarios
 │   └── Dockerfile                  # Gemma agent container
+├── test/
+│   ├── test_duckdb_ossie.py        # Python test runner for duckdb-ossie & duckdb_mcp
+│   └── Dockerfile                  # Container packaging DuckDB 1.5.5 and cached extensions
 └── verifier/
     ├── verify.py                   # End-to-end integration verifier
     └── Dockerfile                  # Verifier container
