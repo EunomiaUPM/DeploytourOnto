@@ -244,7 +244,7 @@ For comprehensive benchmarks and architecture comparisons, refer to [DUCKDB_OSSI
 * **[WORKFLOW.md](file:///Users/jsalvachua/OntoDeployTour/WORKFLOW.md):** Detailed end-to-end breakdown of the lifecycle of a query or problem, including sequence diagrams, intent parsing, semantic federation, and resilience checkpoints.
 * **[TESTING.md](file:///Users/jsalvachua/OntoDeployTour/TESTING.md):** Deep-dive guide into cross-ontology join mechanics, SQL calculations, the 5 Gemma test scenarios, and the native `duckdb-ossie` test suite.
 * **[DUCKDB_OSSIE_TEST.md](file:///Users/jsalvachua/OntoDeployTour/DUCKDB_OSSIE_TEST.md):** Dedicated technical evaluation report on the Iqea Technologies `duckdb-ossie` and `duckdb_mcp` community extensions.
-* **[DEPLOYTOUR_PoC_Architecture_and_Testing.pptx](file:///Users/jsalvachua/OntoDeployTour/DEPLOYTOUR_PoC_Architecture_and_Testing.pptx):** Comprehensive 14-slide executive and technical PowerPoint presentation detailing the architecture, semantic alignment, verification results, and `duckdb-ossie` evaluation.
+* **[DEPLOYTOUR_PoC_Architecture_and_Testing.pptx](file:///Users/jsalvachua/OntoDeployTour/DEPLOYTOUR_PoC_Architecture_and_Testing.pptx):** Comprehensive 15-slide executive and technical PowerPoint presentation detailing the architecture, semantic alignment, verification results, query workflow, and `duckdb-ossie` evaluation.
 
 ---
 
@@ -263,7 +263,7 @@ OntoDeployTour/
 ├── WORKFLOW.md                     # Detailed query resolution and analytical problem-solving lifecycle
 ├── TESTING.md                      # Detailed test cases & cross-ontology query mechanics
 ├── DUCKDB_OSSIE_TEST.md            # duckdb-ossie community extension evaluation report
-├── DEPLOYTOUR_...pptx              # PowerPoint presentation artifact (14 slides)
+├── DEPLOYTOUR_...pptx              # PowerPoint presentation artifact (15 slides)
 ├── generate_presentation.py        # Automated pptx presentation generator script
 ├── engine/
 │   └── federated_query.sql         # Core cross-ontology DuckDB SQL query
