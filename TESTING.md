@@ -16,7 +16,7 @@ limitations under the License.
 
 # DEPLOYTOUR: Testing Guide & Cross-Ontology Query Mechanics
 
-This document provides a comprehensive technical walkthrough of how cross-ontology federation works in the **DEPLOYTOUR** Proof of Concept (PoC), how SQL queries bridge disparate conceptual schemas across Apache Iceberg lakehouses, and how the automated test suite validates the system.
+This document provides a comprehensive technical walkthrough of how cross-ontology federation works in the **DEPLOYTOUR** Proof of Concept (PoC), how SQL queries bridge disparate conceptual schemas across Apache Iceberg lakehouses, and how the automated test suite validates the system. *(For a complete architectural breakdown of the query resolution lifecycle, sequence diagrams, and agent reasoning loops, see [WORKFLOW.md](file:///Users/jsalvachua/OntoDeployTour/WORKFLOW.md).)*
 
 ---
 
