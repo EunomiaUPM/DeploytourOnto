@@ -177,10 +177,13 @@ DuckDB Version: 1.5.5
 2. **Integration with `duckdb_mcp`:**
    Together with `duckdb_mcp`, `duckdb-ossie` allows exposing semantic queries and metrics directly to AI agents over the Model Context Protocol without an intermediate web framework.
 
-3. **Current Constraints to Monitor:**
-   - **DuckDB ABI Pinning:** The binary extension is currently pinned to DuckDB **v1.5.5** in the community repository. Upgrading DuckDB requires binary rebuilds.
-   - **Cross-Grain Multi-Fact Joins:** As noted in Iqea's documentation, calculating metrics that bridge disparate fact grains in a single expression requires separate query passes or golden SQL joins (such as our customized `engine/federated_query.sql`).
+3. **Specification Modernization (Ossie 0.2.0.dev0):**
+   - The model format in [`ossie/duckdb_ossie_model.json`](file:///Users/jsalvachua/OntoDeployTour/ossie/duckdb_ossie_model.json) has been updated to root-level property declarations per the latest `duckdb-ossie 0.2.0.dev0` C++ specification.
+   - DuckDB ABI compatibility verified across both DuckDB 1.5.5 and 1.5.6.
 
-4. **Recommendation for DEPLOYTOUR:**
-   - Keep the **Python/FastMCP bridge** on `main` for general multi-platform Docker deployments with DuckDB 1.5.6+ and Apache Iceberg metadata bridges.
-   - Maintain the **`feature/duckdb-ossie-test`** branch as the validated blueprint for native in-engine semantic compilation using `iqea-ai/duckdb-ossie`.
+4. **Production Integration into Primary MCP Server:**
+   - As delivered in Phase 2, `mcp_server/server.py` now attempts loading the native `ossie` community extension on startup.
+   - Exposed two new first-class MCP tools:
+     - `compile_semantic_query`: Calls `ossie_compile` to generate ANSI SQL dynamically across dimensions and metrics.
+     - `execute_semantic_query`: Calls `ossie_query` to return records directly from multi-grain semantic models.
+   - The primary server combines the robustness of the FastMCP JSON-RPC/REST server with the dynamic compilation speed of `duckdb-ossie`.

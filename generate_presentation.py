@@ -302,22 +302,30 @@ def create_deck(output_path="DEPLOYTOUR_PoC_Architecture_and_Testing.pptx"):
     # =========================================================================
     # SLIDE 9: Model Context Protocol (MCP) Server
     # =========================================================================
+    # =========================================================================
+    # SLIDE 9: Model Context Protocol (MCP) Server
+    # =========================================================================
     s9 = prs.slides.add_slide(blank_layout)
     add_header(s9, "Model Context Protocol (MCP) Server Interface", "Standardized API")
 
-    add_card(s9, 0.8, 1.8, 5.6, 5.0, "Standardized Protocols & Endpoints", [
+    add_card(s9, 0.8, 1.8, 5.6, 5.0, "Standardized Protocols & Security", [
         ("Framework", "FastAPI + FastMCP listening on port 8000."),
-        ("JSON-RPC 2.0", "Endpoint /mcp compliant with standard Anthropic / open MCP specification."),
-        ("REST Tool Invocation", "Direct GET/POST endpoints at /tools/{name}."),
-        ("Streaming", "Server-Sent Events (SSE) support for streaming observations.")
+        ("JSON-RPC 2.0 & REST", "Endpoint /mcp and /tools/{name} compliant with open MCP specifications."),
+        ("SQL Security Guardrails", "Built-in SQL sanitizer blocks DDL/DML mutations (DROP/DELETE/SYSTEM)."),
+        ("Native Ossie Engine", "Direct in-engine execution of ossie_compile and ossie_query."),
+        ("Streaming Support", "Server-Sent Events (SSE) support for streaming tool execution.")
     ], badge="Server Architecture")
 
-    add_card(s9, 6.8, 1.8, 5.6, 5.0, "Exposed Analytical MCP Tools", [
-        ("list_semantic_entities", "Returns Ossie datasets, entities, and defined metrics."),
-        ("get_ontology_mappings", "Returns FIWARE <-> SEGITTUR translation dictionary and join keys."),
-        ("execute_federated_query", "Executes the cross-ontology join in DuckDB returning structured rows."),
-        ("run_custom_duckdb_sql", "Executes targeted custom SQL queries against the federated Iceberg views.")
-    ], badge="MCP Tools")
+    add_card(s9, 6.8, 1.8, 5.6, 5.0, "8 Exposed Analytical MCP Tools", [
+        ("list_semantic_entities", "Discovers Ossie datasets, entities, and defined metrics."),
+        ("get_ontology_mappings", "FIWARE <-> SEGITTUR cross-ontology dictionary and join keys."),
+        ("execute_federated_query", "Zero-copy cross-ontology join in DuckDB with spatial distance."),
+        ("run_custom_duckdb_sql", "Executes read-only SQL with strict injection sanitization."),
+        ("compile_semantic_query", "Compiles high-level Ossie metrics into ANSI SQL in DuckDB."),
+        ("execute_semantic_query", "Executes dynamic multi-grain semantic queries directly."),
+        ("execute_spatial_proximity_query", "Computes geodesic distances (ST_Distance_Spheroid) to POIs."),
+        ("execute_temporal_pressure_query", "Models seasonal variance curves and summer surge swings.")
+    ], badge="8 MCP Tools", border_color=C_EMERALD)
 
     # =========================================================================
     # SLIDE 10: Intelligence Tier: Google Gemma LLM Agent
@@ -325,17 +333,19 @@ def create_deck(output_path="DEPLOYTOUR_PoC_Architecture_and_Testing.pptx"):
     s10 = prs.slides.add_slide(blank_layout)
     add_header(s10, "Intelligence Tier: Google Gemma LLM Agent", "Autonomous Reasoner")
 
-    add_card(s10, 0.8, 1.8, 5.6, 5.0, "Gemma-2 Prompt Engineering", [
+    add_card(s10, 0.8, 1.8, 5.6, 5.0, "Gemma-2 Prompt Engineering & Function Calling", [
         ("Template", "<start_of_turn>user ... <end_of_turn> <start_of_turn>model thought ..."),
-        ("Function Calling", "Formulates explicit tool call blocks: ```call:tool_name {args}```"),
-        ("Synthesis", "Transforms raw tabular DuckDB observations into structured executive reports with Markdown tables.")
+        ("Tool Protocol", "Formulates explicit tool call blocks: ```call:tool_name {args}```"),
+        ("Live LLM Execution", "Directly connects to Ollama/vLLM endpoints (LLM_BASE_URL) for live inference."),
+        ("Autonomous Synthesis", "Ingests tool observations into Gemma context buffer to generate structured Markdown reports.")
     ], badge="Prompt Format")
 
-    add_card(s10, 6.8, 1.8, 5.6, 5.0, "Zero-Dependency & External LLM Pluggability", [
-        ("Autonomous Engine", "Embedded reasoning engine operates completely offline without downloading 5GB models."),
-        ("Ollama / vLLM Ready", "Easily connected to real external Gemma models via LLM_BASE_URL (e.g. ollama run gemma:2b)."),
-        ("CLI Interface", "Supports both one-shot commands and interactive REPL sessions.")
-    ], badge="Flexibility")
+    add_card(s10, 6.8, 1.8, 5.6, 5.0, "Dual-Engine Resilience & Pluggability", [
+        ("Live Inference Mode", "Full OpenAI/Ollama compatible endpoint client executing real function calls."),
+        ("Offline Fallback Mode", "Embedded deterministic reasoning engine operates 100% offline without dependencies."),
+        ("Multi-Modal Intent Routing", "Routes natural language to spatial, temporal, semantic, or federated SQL tools."),
+        ("CLI & REPL", "Supports both one-shot commands (query.sh) and interactive conversational sessions.")
+    ], badge="Flexibility", border_color=C_EMERALD)
 
     # =========================================================================
     # SLIDE 11: End-to-End Query Resolution & Analytical Workflow
@@ -345,68 +355,78 @@ def create_deck(output_path="DEPLOYTOUR_PoC_Architecture_and_Testing.pptx"):
 
     add_card(s11, 0.8, 1.8, 3.6, 5.0, "1. Intake & Autonomous Reasoning", [
         ("User Prompt Ingestion", "Query submitted via CLI or interactive REPL (query.sh)."),
-        ("Dynamic Tool Introspection", "Gemma discovers MCP tools and schemas via list_tools()."),
-        ("Gemma-2 Prompt Template", "<start_of_turn>user ... model thought ... formulating hypothesis."),
-        ("Intent Routing", "Classifies intent: schema discovery, ontology alignment, or analytical SQL.")
+        ("Dynamic Tool Introspection", "Agent discovers 8 MCP tools and schemas via list_tools()."),
+        ("Gemma-2 Reasoning Loop", "Live LLM or embedded reasoner formulates hypothesis and intent."),
+        ("Multi-Domain Routing", "Classifies query: spatial proximity, seasonal swings, or federated SQL.")
     ], badge="Gemma-2 Loop")
 
-    add_card(s11, 4.8, 1.8, 3.6, 5.0, "2. Protocol Dispatch & Semantic Bridge", [
+    add_card(s11, 4.8, 1.8, 3.6, 5.0, "2. Protocol Dispatch & Security Guard", [
         ("JSON-RPC 2.0 Transport", "Packages standard call payload sent to FastMCP server (:8000)."),
-        ("Ossie Semantic Resolution", "Resolves cross-ontology dictionaries (mappings.yaml & metrics.yaml)."),
-        ("Spatial Key Equivalence", "Aligns FIWARE municipality_code <=> SEGITTUR codigo_ine_municipio."),
-        ("Taxonomy Mapping", "Aligns lodging types (Hotel, Camping) with destination spaces.")
-    ], badge="Ossie Federation")
+        ("SQL Sanitization Guard", "Verifies read-only policy, blocking mutations or shell injection."),
+        ("Ossie Semantic Engine", "Resolves cross-ontology dictionaries and dynamic multi-grain models."),
+        ("Geospatial & Temporal Filter", "Applies ST_Distance_Spheroid or seasonal multiplier models.")
+    ], badge="Ossie & Security")
 
     add_card(s11, 8.8, 1.8, 3.6, 5.0, "3. Zero-Copy Execution & Synthesis", [
         ("Direct Iceberg Scan", "DuckDB scans v1.metadata.json directly over shared /data volume."),
-        ("Vectorized Query Plan", "Executes in-memory cross-lake join and derived metric formulas."),
+        ("Vectorized Query Plan", "Executes in-memory cross-lake join, spatial distance, and seasonal models."),
         ("Observation Ingestion", "Pipes structured JSON record batches back to Gemma context buffer."),
-        ("Insightful Synthesis", "Agent crafts executive report with Markdown tables and policy takeaways.")
+        ("Executive Synthesis", "Agent crafts executive report with Markdown tables and policy takeaways.")
     ], badge="DuckDB & Insights", border_color=C_EMERALD)
 
     # =========================================================================
-    # SLIDE 12: Verification & Testing: 5 Scenarios
+    # SLIDE 12: Verification & Testing: 9 Scenarios
     # =========================================================================
     s12 = prs.slides.add_slide(blank_layout)
-    add_header(s12, "Validation Suite: 5 Real-World Semantic Test Scenarios", "Test Engineering")
+    add_header(s12, "Validation Suite: 9 Real-World Analytical & Security Test Scenarios", "Test Engineering")
 
-    scenarios = [
-        ("1. Schema Discovery", "list_semantic_entities", "Discovers fiware_accommodations, segittur_destinos, and metrics.", 0.8),
-        ("2. Mapping Resolution", "get_ontology_mappings", "Validates join keys and taxonomy equivalence rules.", 3.2),
-        ("3. Tourism Pressure", "execute_federated_query", "73 rows federated; identifies Las Palmas (35016) index 22.34.", 5.6),
+    # Row 1 (5 cards)
+    row1 = [
+        ("1. Schema Discovery", "list_semantic_entities", "Discovers datasets, metrics, and native engine catalogs.", 0.8),
+        ("2. Mapping Resolution", "get_ontology_mappings", "Validates INE join keys and taxonomy equivalence.", 3.2),
+        ("3. Tourism Pressure", "execute_federated_query", "Federates cross-lakehouse beds vs visitor footfall.", 5.6),
         ("4. City Comparison", "run_custom_duckdb_sql", "Targeted query comparing Girona (17079) and Barcelona (08019).", 8.0),
-        ("5. Overcapacity Scan", "run_custom_duckdb_sql", "Detects extreme overcapacity anomalies where visitors > 50x beds.", 10.4),
+        ("5. Overcapacity Scan", "run_custom_duckdb_sql", "Detects extreme overcapacity anomalies (> 50x beds).", 10.4),
     ]
+    for title, tool, desc, left in row1:
+        add_card(s12, left, 1.8, 2.1, 2.4, title, [f"Tool: {tool}", desc], badge="Verified", border_color=C_EMERALD)
 
-    for title, tool, desc, left in scenarios:
-        add_card(s12, left, 1.8, 2.1, 5.0, title, [f"Tool: {tool}", desc], badge="Verified", border_color=C_EMERALD)
+    # Row 2 (4 cards)
+    row2 = [
+        ("6. Spatial Proximity", "execute_spatial_proximity_query", "Geodesic distance (ST_Distance_Spheroid) between hotels and POIs.", 0.8),
+        ("7. Seasonal Pressure", "execute_temporal_pressure_query", "Simulates quarterly shifts (Winter trough to Summer peak).", 3.8),
+        ("8. SQL Sanitization", "run_custom_duckdb_sql", "Security guardrail safely blocks DROP/DELETE injections.", 6.8),
+        ("9. Dynamic Ossie", "compile_semantic_query", "Autonomous ANSI SQL compilation via duckdb-ossie.", 9.8),
+    ]
+    for title, tool, desc, left in row2:
+        add_card(s12, left, 4.4, 2.7, 2.4, title, [f"Tool: {tool}", desc], badge="Verified", border_color=C_EMERALD)
 
     # =========================================================================
-    # SLIDE 13: Native Apache Ossie Extension: duckdb-ossie Evaluation
+    # SLIDE 13: Native Apache Ossie Extension: duckdb-ossie Integration
     # =========================================================================
     s13 = prs.slides.add_slide(blank_layout)
-    add_header(s13, "Native Apache Ossie Extension: duckdb-ossie Evaluation", "Community Extension")
+    add_header(s13, "Native Apache Ossie Extension: duckdb-ossie Integration", "Community Extension")
 
     add_card(s13, 0.8, 1.8, 3.6, 5.0, "C++ In-Engine Semantic Core", [
         ("Iqea duckdb-ossie", "Official community extension ('INSTALL ossie FROM community;')."),
+        ("Model Specification v0.2.0", "Updated duckdb_ossie_model.json to root-level specification compliance."),
         ("Embedded Execution", "Declarative Apache Ossie models parsed and evaluated directly in DuckDB core."),
-        ("Schema Validation", "CALL ossie_load validates JSON models (v0.2.0.dev0) and entity dimensions."),
         ("Catalog Introspection", "Native functions: ossie_datasets(), ossie_fields(), ossie_metrics(), ossie_relationships().")
     ], badge="Extension Core")
 
     add_card(s13, 4.8, 1.8, 3.6, 5.0, "Autonomous SQL Planning", [
         ("Multi-Grain Compilation", "ossie_compile autonomously generates GROUP BY and aggregations across dimensions."),
         ("Semantic Query Execution", "ossie_query executes complex derived metric calculations without manual SQL."),
-        ("duckdb_mcp Integration", "Exposes semantic tools natively via PRAGMA mcp_publish_tool / query."),
-        ("Zero Middleware", "Enables direct LLM agent queries without requiring external web servers.")
-    ], badge="SQL Synthesis")
+        ("MCP Server Integration", "Exposed as native MCP tools: compile_semantic_query and execute_semantic_query."),
+        ("Zero Middleware", "Enables direct LLM agent queries without requiring external compilation services.")
+    ], badge="SQL Synthesis", border_color=C_EMERALD)
 
-    add_card(s13, 8.8, 1.8, 3.6, 5.0, "Containerized Verification", [
-        ("Docker Test Service", "Containerized service duckdb-ossie-tester in docker-compose.yml."),
-        ("ABI Compatibility", "Pinned to DuckDB 1.5.5 with pre-cached community extension binaries."),
+    add_card(s13, 8.8, 1.8, 3.6, 5.0, "Automated Verification", [
+        ("Production Integration", "Embedded in primary mcp-server container and local test harness."),
+        ("ABI Compatibility", "Verified across DuckDB 1.5.5 and DuckDB 1.5.6 release builds."),
         ("Automated Test Runner", "./run_duckdb_ossie_test.sh validates all 6 lifecycle steps with code 0."),
         ("Architectural Verdict", "Proven complement to FastMCP: ultra-fast in-engine compilation.")
-    ], badge="6/6 Steps Passed", border_color=C_EMERALD)
+    ], badge="Verified Code 0", border_color=C_EMERALD)
 
     # =========================================================================
     # SLIDE 14: Deployment & Operational Developer Experience
@@ -418,7 +438,7 @@ def create_deck(output_path="DEPLOYTOUR_PoC_Architecture_and_Testing.pptx"):
         ("./start_infra.sh", "Starts data-generator, Gravitino, and MCP server in background."),
         ("./query.sh <prompt>", "Executes Gemma Agent one-shot query against running MCP server."),
         ("./query.sh", "Launches interactive conversational REPL session with Gemma."),
-        ("./run_tests.sh", "Runs full 5-scenario Gemma test suite against live infrastructure."),
+        ("./run_tests.sh", "Runs full 9-scenario Gemma test suite against live infrastructure."),
         ("./run_duckdb_ossie_test.sh", "Runs containerized test for native duckdb-ossie C++ extension."),
         ("./stop_infra.sh", "Tears down containers and wipes volumes.")
     ], badge="Developer Workflow")
@@ -436,25 +456,26 @@ def create_deck(output_path="DEPLOYTOUR_PoC_Architecture_and_Testing.pptx"):
     s15 = prs.slides.add_slide(blank_layout)
     add_header(s15, "Key Takeaways & Future Roadmap", "Strategic Value")
 
-    add_card(s15, 0.8, 1.8, 3.6, 5.0, "Proven Results", [
-        ("Zero-ETL Success", "Bridged conflicting schemas without copying data."),
-        ("Traceable Workflow", "Formalized 8-stage analytical pipeline from query to insight."),
-        ("Standards Alignment", "Fully compliant with Apache Iceberg & Gravitino."),
-        ("High Performance", "Sub-second federated SQL in DuckDB."),
-        ("Dual Semantic Support", "Verified FastMCP bridge and native duckdb-ossie C++ extension.")
-    ], badge="Accomplished")
+    add_card(s15, 0.8, 1.8, 3.6, 5.0, "Phase 1-3 Delivered Features", [
+        ("Live LLM Integration", "Connected to Ollama/vLLM endpoints with robust offline fallback."),
+        ("SQL Security Guardrails", "Sanitizer blocks SQL injections and mutating statements."),
+        ("Native Ossie Engine", "Dynamic compilation and execution via duckdb-ossie 0.2.0."),
+        ("GIS Spatial Proximity", "Geodesic distances calculated via ST_Distance_Spheroid."),
+        ("Seasonal Tourism Dynamics", "Models quarterly demand swings and summer peak surges.")
+    ], badge="Phases 1-3 Completed", border_color=C_EMERALD)
 
-    add_card(s15, 4.8, 1.8, 3.6, 5.0, "Business Impact", [
+    add_card(s15, 4.8, 1.8, 3.6, 5.0, "Business & Policy Impact", [
         ("Tourism Sustainability", "Accurately computes tourism pressure and congestion risks."),
+        ("Local POI Proximity", "Reveals accommodation density around cultural and natural attractions."),
         ("Cross-Entity Trust", "Allows public and private entities to collaborate without sharing raw internal DBs."),
         ("Interoperability Blueprint", "Ready for deployment across Spanish smart destinations.")
-    ], badge="Impact")
+    ], badge="Business Impact")
 
     add_card(s15, 8.8, 1.8, 3.6, 5.0, "Future Roadmap", [
         ("Enterprise Storage", "Transition from local volume to S3/GCS object stores with Gravitino."),
         ("Live Stream Updates", "Continuous CDC ingestion into Iceberg tables."),
-        ("Multi-Modal Dashboard", "Visual geospatial heatmaps embedded in agent responses.")
-    ], badge="Roadmap")
+        ("Web Visual Dashboard", "Interactive Mapbox/Leaflet GIS heatmaps embedded in chat UI.")
+    ], badge="Future Roadmap")
 
     # Save presentation
     prs.save(output_path)

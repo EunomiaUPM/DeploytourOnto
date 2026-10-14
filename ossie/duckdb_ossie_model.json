@@ -1,292 +1,288 @@
 {
-  "_comment": "Copyright 2024-2026 Universidad Politécnica de Madrid / Deploytour. Licensed under Apache 2.0.",
+  "_comment": "Copyright 2024-2026 Universidad Polit\u00e9cnica de Madrid / Deploytour. Licensed under Apache 2.0.",
   "version": "0.2.0.dev0",
-  "semantic_model": [
+  "name": "deploytour_tourism_model",
+  "description": "DEPLOYTOUR Cross-Ontology Semantic Model bridging FIWARE Smart Data Models and SEGITTUR/Schema.org",
+  "ai_context": {
+    "instructions": "Use this semantic model for Spanish tourism analytics. It federates accommodation capacity from FIWARE with tourist footfall and spend from SEGITTUR."
+  },
+  "datasets": [
     {
-      "name": "deploytour_tourism_model",
-      "description": "DEPLOYTOUR Cross-Ontology Semantic Model bridging FIWARE Smart Data Models and SEGITTUR/Schema.org",
+      "name": "fiware_accommodations",
+      "source": "memory.main.fiware_accommodations",
+      "primary_key": [
+        "id"
+      ],
+      "description": "FIWARE Smart Data Models accommodation capacity and lodging types",
       "ai_context": {
-        "instructions": "Use this semantic model for Spanish tourism analytics. It federates accommodation capacity from FIWARE with tourist footfall and spend from SEGITTUR."
+        "synonyms": [
+          "accommodations",
+          "hotels",
+          "lodging capacity",
+          "hostals"
+        ]
       },
-      "datasets": [
+      "fields": [
         {
-          "name": "fiware_accommodations",
-          "source": "memory.main.fiware_accommodations",
-          "primary_key": [
-            "id"
-          ],
-          "description": "FIWARE Smart Data Models accommodation capacity and lodging types",
-          "ai_context": {
-            "synonyms": [
-              "accommodations",
-              "hotels",
-              "lodging capacity",
-              "hostals"
-            ]
-          },
-          "fields": [
-            {
-              "name": "id",
-              "expression": {
-                "dialects": [
-                  {
-                    "dialect": "ANSI_SQL",
-                    "expression": "id"
-                  }
-                ]
-              },
-              "description": "Unique identifier of the accommodation establishment",
-              "datatype": "String"
-            },
-            {
-              "name": "municipality_code",
-              "expression": {
-                "dialects": [
-                  {
-                    "dialect": "ANSI_SQL",
-                    "expression": "municipality_code"
-                  }
-                ]
-              },
-              "description": "INE 5-digit municipality code (e.g. 28079 for Madrid, 08019 for Barcelona)",
-              "datatype": "String",
-              "ai_context": {
-                "synonyms": [
-                  "city code",
-                  "ine code",
-                  "municipality"
-                ]
-              }
-            },
-            {
-              "name": "category",
-              "expression": {
-                "dialects": [
-                  {
-                    "dialect": "ANSI_SQL",
-                    "expression": "category"
-                  }
-                ]
-              },
-              "description": "Accommodation category classification in FIWARE (Hotel, Hostal, Apartment, Camping)",
-              "datatype": "String",
-              "ai_context": {
-                "synonyms": [
-                  "lodging type",
-                  "hotel category"
-                ]
-              }
-            },
-            {
-              "name": "capacity_beds",
-              "expression": {
-                "dialects": [
-                  {
-                    "dialect": "ANSI_SQL",
-                    "expression": "capacity_beds"
-                  }
-                ]
-              },
-              "description": "Total registered bed capacity of the establishment",
-              "datatype": "Integer",
-              "ai_context": {
-                "synonyms": [
-                  "beds",
-                  "number of beds",
-                  "room capacity"
-                ]
-              }
-            },
-            {
-              "name": "occupancy_rate",
-              "expression": {
-                "dialects": [
-                  {
-                    "dialect": "ANSI_SQL",
-                    "expression": "occupancy_rate"
-                  }
-                ]
-              },
-              "description": "Current average occupancy rate between 0.0 and 1.0",
-              "datatype": "Double"
-            }
-          ]
-        },
-        {
-          "name": "segittur_destinos",
-          "source": "memory.main.segittur_destinos",
-          "primary_key": [
-            "id_destino"
-          ],
-          "description": "SEGITTUR and Schema.org destination flows, visitor volume and tourist spend",
-          "ai_context": {
-            "synonyms": [
-              "destinations",
-              "tourism demand",
-              "visitor flows",
-              "footfall"
-            ]
-          },
-          "fields": [
-            {
-              "name": "id_destino",
-              "expression": {
-                "dialects": [
-                  {
-                    "dialect": "ANSI_SQL",
-                    "expression": "id_destino"
-                  }
-                ]
-              },
-              "description": "Unique identifier of destination point of interest",
-              "datatype": "String"
-            },
-            {
-              "name": "codigo_ine_municipio",
-              "expression": {
-                "dialects": [
-                  {
-                    "dialect": "ANSI_SQL",
-                    "expression": "codigo_ine_municipio"
-                  }
-                ]
-              },
-              "description": "Official 5-digit INE municipal code",
-              "datatype": "String",
-              "ai_context": {
-                "synonyms": [
-                  "destination municipality code",
-                  "ine code"
-                ]
-              }
-            },
-            {
-              "name": "tipo_espacio",
-              "expression": {
-                "dialects": [
-                  {
-                    "dialect": "ANSI_SQL",
-                    "expression": "tipo_espacio"
-                  }
-                ]
-              },
-              "description": "SEGITTUR space typology (AlojamientoHotelero, RecursoCultural, EspacioNatural, ZonaAcampada)",
-              "datatype": "String"
-            },
-            {
-              "name": "visitantes_mensuales",
-              "expression": {
-                "dialects": [
-                  {
-                    "dialect": "ANSI_SQL",
-                    "expression": "visitantes_mensuales"
-                  }
-                ]
-              },
-              "description": "Monthly visitor count",
-              "datatype": "Integer",
-              "ai_context": {
-                "synonyms": [
-                  "monthly visitors",
-                  "footfall",
-                  "tourist flow"
-                ]
-              }
-            },
-            {
-              "name": "gasto_medio_diario_eur",
-              "expression": {
-                "dialects": [
-                  {
-                    "dialect": "ANSI_SQL",
-                    "expression": "gasto_medio_diario_eur"
-                  }
-                ]
-              },
-              "description": "Average daily tourist expenditure in Euros",
-              "datatype": "Double"
-            }
-          ]
-        }
-      ],
-      "relationships": [
-        {
-          "name": "accommodation_to_destination_by_ine",
-          "from": "fiware_accommodations",
-          "to": "segittur_destinos",
-          "from_columns": [
-            "municipality_code"
-          ],
-          "to_columns": [
-            "codigo_ine_municipio"
-          ],
-          "ai_context": {
-            "synonyms": [
-              "cross ontology link",
-              "destination join key"
-            ]
-          }
-        }
-      ],
-      "metrics": [
-        {
-          "name": "total_bed_capacity",
+          "name": "id",
           "expression": {
             "dialects": [
               {
                 "dialect": "ANSI_SQL",
-                "expression": "SUM(fiware_accommodations.capacity_beds)"
+                "expression": "id"
               }
             ]
           },
-          "description": "Total available lodging beds in the municipality",
+          "description": "Unique identifier of the accommodation establishment",
+          "datatype": "String"
+        },
+        {
+          "name": "municipality_code",
+          "expression": {
+            "dialects": [
+              {
+                "dialect": "ANSI_SQL",
+                "expression": "municipality_code"
+              }
+            ]
+          },
+          "description": "INE 5-digit municipality code (e.g. 28079 for Madrid, 08019 for Barcelona)",
+          "datatype": "String",
+          "ai_context": {
+            "synonyms": [
+              "city code",
+              "ine code",
+              "municipality"
+            ]
+          }
+        },
+        {
+          "name": "category",
+          "expression": {
+            "dialects": [
+              {
+                "dialect": "ANSI_SQL",
+                "expression": "category"
+              }
+            ]
+          },
+          "description": "Accommodation category classification in FIWARE (Hotel, Hostal, Apartment, Camping)",
+          "datatype": "String",
+          "ai_context": {
+            "synonyms": [
+              "lodging type",
+              "hotel category"
+            ]
+          }
+        },
+        {
+          "name": "capacity_beds",
+          "expression": {
+            "dialects": [
+              {
+                "dialect": "ANSI_SQL",
+                "expression": "capacity_beds"
+              }
+            ]
+          },
+          "description": "Total registered bed capacity of the establishment",
           "datatype": "Integer",
           "ai_context": {
             "synonyms": [
-              "total beds",
-              "capacity"
+              "beds",
+              "number of beds",
+              "room capacity"
             ]
           }
         },
         {
-          "name": "total_monthly_visitors",
+          "name": "occupancy_rate",
           "expression": {
             "dialects": [
               {
                 "dialect": "ANSI_SQL",
-                "expression": "SUM(segittur_destinos.visitantes_mensuales)"
+                "expression": "occupancy_rate"
               }
             ]
           },
-          "description": "Total monthly visitor volume at the destination",
-          "datatype": "Integer",
-          "ai_context": {
-            "synonyms": [
-              "total visitors",
-              "tourist footfall"
-            ]
-          }
-        },
-        {
-          "name": "estimated_monthly_expenditure_eur",
-          "expression": {
-            "dialects": [
-              {
-                "dialect": "ANSI_SQL",
-                "expression": "SUM(segittur_destinos.visitantes_mensuales * segittur_destinos.gasto_medio_diario_eur)"
-              }
-            ]
-          },
-          "description": "Estimated total monthly tourist expenditure in Euros",
-          "datatype": "Double",
-          "ai_context": {
-            "synonyms": [
-              "total tourist spend",
-              "monthly economic impact"
-            ]
-          }
+          "description": "Current average occupancy rate between 0.0 and 1.0",
+          "datatype": "Double"
         }
       ]
+    },
+    {
+      "name": "segittur_destinos",
+      "source": "memory.main.segittur_destinos",
+      "primary_key": [
+        "id_destino"
+      ],
+      "description": "SEGITTUR and Schema.org destination flows, visitor volume and tourist spend",
+      "ai_context": {
+        "synonyms": [
+          "destinations",
+          "tourism demand",
+          "visitor flows",
+          "footfall"
+        ]
+      },
+      "fields": [
+        {
+          "name": "id_destino",
+          "expression": {
+            "dialects": [
+              {
+                "dialect": "ANSI_SQL",
+                "expression": "id_destino"
+              }
+            ]
+          },
+          "description": "Unique identifier of destination point of interest",
+          "datatype": "String"
+        },
+        {
+          "name": "codigo_ine_municipio",
+          "expression": {
+            "dialects": [
+              {
+                "dialect": "ANSI_SQL",
+                "expression": "codigo_ine_municipio"
+              }
+            ]
+          },
+          "description": "Official 5-digit INE municipal code",
+          "datatype": "String",
+          "ai_context": {
+            "synonyms": [
+              "destination municipality code",
+              "ine code"
+            ]
+          }
+        },
+        {
+          "name": "tipo_espacio",
+          "expression": {
+            "dialects": [
+              {
+                "dialect": "ANSI_SQL",
+                "expression": "tipo_espacio"
+              }
+            ]
+          },
+          "description": "SEGITTUR space typology (AlojamientoHotelero, RecursoCultural, EspacioNatural, ZonaAcampada)",
+          "datatype": "String"
+        },
+        {
+          "name": "visitantes_mensuales",
+          "expression": {
+            "dialects": [
+              {
+                "dialect": "ANSI_SQL",
+                "expression": "visitantes_mensuales"
+              }
+            ]
+          },
+          "description": "Monthly visitor count",
+          "datatype": "Integer",
+          "ai_context": {
+            "synonyms": [
+              "monthly visitors",
+              "footfall",
+              "tourist flow"
+            ]
+          }
+        },
+        {
+          "name": "gasto_medio_diario_eur",
+          "expression": {
+            "dialects": [
+              {
+                "dialect": "ANSI_SQL",
+                "expression": "gasto_medio_diario_eur"
+              }
+            ]
+          },
+          "description": "Average daily tourist expenditure in Euros",
+          "datatype": "Double"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "name": "accommodation_to_destination_by_ine",
+      "from": "fiware_accommodations",
+      "to": "segittur_destinos",
+      "from_columns": [
+        "municipality_code"
+      ],
+      "to_columns": [
+        "codigo_ine_municipio"
+      ],
+      "ai_context": {
+        "synonyms": [
+          "cross ontology link",
+          "destination join key"
+        ]
+      }
+    }
+  ],
+  "metrics": [
+    {
+      "name": "total_bed_capacity",
+      "expression": {
+        "dialects": [
+          {
+            "dialect": "ANSI_SQL",
+            "expression": "SUM(fiware_accommodations.capacity_beds)"
+          }
+        ]
+      },
+      "description": "Total available lodging beds in the municipality",
+      "datatype": "Integer",
+      "ai_context": {
+        "synonyms": [
+          "total beds",
+          "capacity"
+        ]
+      }
+    },
+    {
+      "name": "total_monthly_visitors",
+      "expression": {
+        "dialects": [
+          {
+            "dialect": "ANSI_SQL",
+            "expression": "SUM(segittur_destinos.visitantes_mensuales)"
+          }
+        ]
+      },
+      "description": "Total monthly visitor volume at the destination",
+      "datatype": "Integer",
+      "ai_context": {
+        "synonyms": [
+          "total visitors",
+          "tourist footfall"
+        ]
+      }
+    },
+    {
+      "name": "estimated_monthly_expenditure_eur",
+      "expression": {
+        "dialects": [
+          {
+            "dialect": "ANSI_SQL",
+            "expression": "SUM(segittur_destinos.visitantes_mensuales * segittur_destinos.gasto_medio_diario_eur)"
+          }
+        ]
+      },
+      "description": "Estimated total monthly tourist expenditure in Euros",
+      "datatype": "Double",
+      "ai_context": {
+        "synonyms": [
+          "total tourist spend",
+          "monthly economic impact"
+        ]
+      }
     }
   ]
 }

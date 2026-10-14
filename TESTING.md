@@ -245,6 +245,58 @@ The test suite ([`verifier/verify.py`](file:///Users/jsalvachua/OntoDeployTour/v
 
 ---
 
+### Test Case 6: Spatial Geodesic Proximity Analysis (GIS)
+
+* **User Prompt:** `"Analyze spatial proximity and distance between accommodations and tourist POIs within 10 km radius."`
+* **Agent Reasoning:** The user needs hyper-local spatial proximity calculations between physical lodging (Lakehouse A) and destination POIs/resources (Lakehouse B). The agent invokes `execute_spatial_proximity_query`.
+* **MCP Tool:** `execute_spatial_proximity_query(municipality_code=None, max_distance_km=10.0, limit=20)`
+* **Verification Assertions:**
+  1. Evaluates true geodesic WGS84 distance using DuckDB's `ST_Distance_Spheroid(ST_Point(lon, lat), ST_Point(lon, lat))`.
+  2. Returns paired records with `distance_km` calculated in kilometers.
+* **Gemma Synthesis:**
+  Produces a structured table associating accommodations with proximate cultural/natural POIs.
+
+---
+
+### Test Case 7: Seasonal & Temporal Tourism Pressure Dynamics
+
+* **User Prompt:** `"Analyze seasonal tourism pressure variations and summer peak swings."`
+* **Agent Reasoning:** Tourism congestion is highly temporal. The agent routes to `execute_temporal_pressure_query` to evaluate Spanish seasonal variance models.
+* **MCP Tool:** `execute_temporal_pressure_query(municipality_code=None)`
+* **Verification Assertions:**
+  1. Computes quarterly pressure indices across Winter (0.65x), Spring (1.05x), Summer Peak (1.55x), and Autumn (0.85x).
+  2. Evaluates the seasonal variance swing ($\Delta$) for municipal infrastructure planning.
+* **Gemma Synthesis:**
+  Highlights destinations with extreme seasonal swings requiring temporary public service adjustments.
+
+---
+
+### Test Case 8: SQL Sanitization Security Guardrails
+
+* **Probe Action:** Malicious SQL injection attempt (`DROP TABLE fiware_lake`).
+* **Technical Intent:** Verifies that external agents or compromised prompts cannot execute mutating SQL statements, DDL commands, or host OS calls.
+* **MCP Tool:** `run_custom_duckdb_sql(query="DROP TABLE fiware_lake")`
+* **Verification Assertions:**
+  1. Returns `status: "error"`.
+  2. Error message explicitly cites security policy violation: only read-only `SELECT` / `WITH` statements permitted.
+* **Outcome:**
+  Guarantees analytical safety without sacrificing ad-hoc querying flexibility.
+
+---
+
+### Test Case 9: Native Dynamic Semantic Compilation (duckdb-ossie)
+
+* **User Prompt:** `"Compile semantic metrics for total bed capacity using Ossie compile."`
+* **Agent Reasoning:** Tests dynamic semantic compilation where business metrics are translated into ANSI SQL by the C++ engine rather than manual authoring.
+* **MCP Tool:** `compile_semantic_query(metrics=["total_bed_capacity"], dimensions=["fiware_accommodations.municipality_code"])`
+* **Verification Assertions:**
+  1. Returns `status: "success"`.
+  2. Produces valid compiled ANSI SQL with automated `GROUP BY` and metric aggregations.
+* **Gemma Synthesis:**
+  Displays the dynamically compiled SQL query to the user for full transparency.
+
+---
+
 ## 3. How to Run the Tests
 
 ### Option A: Run Tests Against Live Infrastructure (Recommended)
@@ -260,7 +312,7 @@ This runs the containerized `verifier` service, which:
 2. Probes the Apache Gravitino REST API (`http://gravitino:8090/api/v1/metalakes`).
 3. Executes direct DuckDB SQL over the Iceberg lakehouses.
 4. Tests the MCP REST and JSON-RPC endpoints.
-5. Executes all 5 Gemma agent test cases.
+5. Executes all 9 Gemma agent test cases.
 
 ### Option B: All-in-One CI/CD Execution
 

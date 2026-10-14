@@ -41,31 +41,40 @@ sequenceDiagram
     CLI->>Gemma: Invokes agent.execute(user_query)
     Gemma->>Client: Retrieves available tools (list_tools)
     Client->>Server: GET /mcp/tools or JSON-RPC tools/list
-    Server-->>Client: Returns tools [entities, mappings, federated_query, sql]
+    Server-->>Client: Returns 8 tools [entities, mappings, federated_query, sql, ossie_compile, ossie_query, spatial, temporal]
     Client-->>Gemma: Exposes tool definitions & parameter schemas
 
-    Note over Gemma: Reasoning Step:<br/>Formulates hypothesis & selects tool
+    Note over Gemma: Reasoning Step:<br/>Live LLM or embedded reasoner selects tool
     Gemma->>Client: Formulates call:tool_name {args}
     Client->>Server: POST /mcp (JSON-RPC 2.0 method: tools/call)
 
     alt Tool: list_semantic_entities or get_ontology_mappings
-        Server->>Ossie: Parses datasets.yaml / mappings.yaml / metrics.yaml
+        Server->>Ossie: Parses datasets.yaml / mappings.yaml / metrics.yaml & duckdb-ossie
         Ossie-->>Server: Returns taxonomy matrix & join keys
+    else Tool: compile_semantic_query or execute_semantic_query
+        Server->>DuckDB: Evaluates native ossie_compile / ossie_query against Ossie model
+        DuckDB-->>Server: Returns compiled ANSI SQL or multi-grain dataset rows
+    else Tool: execute_spatial_proximity_query
+        Server->>DuckDB: Evaluates ST_Distance_Spheroid between WGS84 coordinates
+        DuckDB-->>Server: Returns accommodations paired with POIs within max_distance_km
+    else Tool: execute_temporal_pressure_query
+        Server->>DuckDB: Evaluates quarterly seasonal variance models (Winter off-peak vs Summer surge)
+        DuckDB-->>Server: Returns municipal seasonal curves and variance swings
     else Tool: execute_federated_query or run_custom_duckdb_sql
+        Server->>Server: Sanitizes SQL (rejects DDL/DML mutations & system injection)
         Server->>Gravitino: Verifies catalog registration (deploytour_metalake)
         Gravitino-->>Server: Confirms fiware_catalog & segittur_catalog
         Server->>DuckDB: Reloads views & executes cross-ontology SQL
         DuckDB->>Lakehouse: Zero-copy scan of Parquet files via v1.metadata.json
-        Lakehouse-->>DuckDB: Returns columnar vectors
-        DuckDB->>DuckDB: Evaluates JOIN on INE code + taxonomy mapping
-        DuckDB->>DuckDB: Computes metrics (TourismPressureIndex, etc.)
+        DuckDB->>DuckDB: Evaluates JOIN on INE code + taxonomy mapping + spatial distance
+        DuckDB->>DuckDB: Computes metrics (TourismPressureIndex, avg_poi_distance_km)
         DuckDB-->>Server: Returns structured record batches
     end
 
     Server-->>Client: Returns structured JSON observation
     Client-->>Gemma: Ingests observation into conversation buffer
     Note over Gemma: Synthesis Step:<br/>Interprets tabular results & formats report
-    Gemma-->>CLI: Formatted Markdown report (KPIs, tables, anomalies)
+    Gemma-->>CLI: Formatted Markdown report (KPIs, tables, anomalies, spatial/temporal insights)
     CLI-->>User: Displays final answer on terminal
 ```
 
@@ -89,11 +98,15 @@ sequenceDiagram
 ### Step 2: Prompt Assembly & Gemma-2 Instruction Formatting
 
 * **Tool Discovery:**
-  The agent queries `MCPClient.list_tools()` to dynamically discover all registered analytical capabilities from the MCP server:
+  The agent queries `MCPClient.list_tools()` to dynamically discover all 8 registered analytical capabilities:
   - `list_semantic_entities`: Introspects Apache Ossie datasets, dimensions, and declared metrics.
   - `get_ontology_mappings`: Returns cross-ontology alignment rules and foreign join keys.
   - `execute_federated_query`: Executes the predefined cross-ontology federated join in DuckDB.
-  - `run_custom_duckdb_sql`: Runs ad-hoc DuckDB SQL against virtual Iceberg views (`fiware_lake` and `segittur_lake`).
+  - `run_custom_duckdb_sql`: Runs ad-hoc DuckDB SQL against virtual Iceberg views with SQL injection sanitization.
+  - `compile_semantic_query`: Compiles high-level semantic metrics into optimized ANSI SQL via native `duckdb-ossie`.
+  - `execute_semantic_query`: Executes dynamic semantic queries directly over declared Ossie datasets.
+  - `execute_spatial_proximity_query`: Computes spatial geodesic distances (`ST_Distance_Spheroid`) between accommodations and POIs.
+  - `execute_temporal_pressure_query`: Simulates quarterly seasonal tourism pressure curves and summer peak swings.
 * **Prompt Construction:**
   The query is wrapped using the official **Google Gemma-2 prompt template**:
   ```text
@@ -105,7 +118,11 @@ sequenceDiagram
   - list_semantic_entities: Lists semantic entities and metrics | Parameters: []
   - get_ontology_mappings: Retrieves FIWARE <-> SEGITTUR mappings | Parameters: []
   - execute_federated_query: Executes cross-ontology federated query | Parameters: []
-  - run_custom_duckdb_sql: Executes arbitrary SQL query on Iceberg views | Parameters: ['query']
+  - run_custom_duckdb_sql: Executes arbitrary read-only SQL on Iceberg views | Parameters: ['query']
+  - compile_semantic_query: Compiles Ossie metrics into ANSI SQL | Parameters: ['metrics', 'dimensions', 'filters']
+  - execute_semantic_query: Executes semantic query via ossie_query | Parameters: ['metrics', 'dimensions', 'filters']
+  - execute_spatial_proximity_query: Computes geodesic distances to POIs | Parameters: ['municipality_code', 'max_distance_km', 'limit']
+  - execute_temporal_pressure_query: Simulates seasonal tourism pressure | Parameters: ['municipality_code']
 
   When answering user queries:
   1. Formulate a thought process: What information is needed?
@@ -124,7 +141,7 @@ sequenceDiagram
 
 ### Step 3: Autonomous Intent Parsing & Reasoning (Thought Phase)
 
-The Gemma reasoning engine analyzes the user's intent according to four distinct problem archetypes:
+The Gemma reasoning engine analyzes the user's intent across seven distinct analytical archetypes:
 
 ```text
 +--------------------------------------------------------------------------------------------------+
@@ -135,8 +152,10 @@ The Gemma reasoning engine analyzes the user's intent according to four distinct
 | 1. Semantic Discovery        | "what datasets", "what metrics"  | Calls list_semantic_entities   |
 | 2. Mapping Alignment         | "how do categories map", "keys"  | Calls get_ontology_mappings    |
 | 3. Global Federation         | "tourism pressure", "highest"    | Calls execute_federated_query  |
-| 4. Targeted / Ad-Hoc Slice   | "compare X and Y", "anomalies"   | Synthesizes SQL & calls        |
-|                              |                                  | run_custom_duckdb_sql          |
+| 4. Targeted / Ad-Hoc Slice   | "compare X and Y", "anomalies"   | Calls run_custom_duckdb_sql    |
+| 5. Spatial Proximity         | "distance", "near", "radius km"  | Calls execute_spatial_proximity|
+| 6. Temporal / Seasonal       | "season", "summer peak", "swings"| Calls execute_temporal_pressure|
+| 7. Dynamic Ossie Compilation | "compile semantic", "ossie"      | Calls compile_semantic_query   |
 +------------------------------+----------------------------------+--------------------------------+
 ```
 
@@ -352,7 +371,69 @@ visitor footfall (688,250 monthly visitors).
 
 ---
 
-## 4. Alternative Execution: Native `duckdb-ossie` Community Extension
+### Walkthrough C: Spatial Geodesic Proximity Analysis (GIS)
+* **User Prompt:** `"Analyze spatial proximity and distance between accommodations and tourist POIs within 10 km radius."`
+
+```text
+1. [USER INPUT]
+   "Analyze spatial proximity and distance between accommodations and tourist POIs within 10 km radius."
+
+2. [AGENT PROMPT & THOUGHT]
+   User requires hyper-local geospatial distance calculation between lodging (FIWARE) and POIs (SEGITTUR).
+   Tool chosen: execute_spatial_proximity_query({"max_distance_km": 10.0, "limit": 20})
+
+3. [MCP PROTOCOL]
+   POST http://mcp-server:8000/mcp
+   Body: {"jsonrpc": "2.0", "method": "tools/call", "params": {"name": "execute_spatial_proximity_query", "arguments": {"max_distance_km": 10.0}}}
+
+4. [DUCKDB ENGINE EXECUTION]
+   Executes ST_Distance_Spheroid(ST_Point(lon, lat), ST_Point(lon, lat)) in DuckDB:
+   - Pairs physical accommodations with nearby POIs
+   - Filters pairs where distance <= 10,000 meters
+   - Orders by distance_km ASC
+
+5. [OBSERVATION RETURNED]
+   Accurate geodesic distances between accommodation units and cultural/natural attractions.
+
+6. [GEMMA SYNTHESIS]
+   Formats structured Markdown table showing accommodation name, POI resource, type, and exact distance in km.
+```
+
+---
+
+### Walkthrough D: Seasonal & Temporal Tourism Pressure Dynamics
+* **User Prompt:** `"Analyze seasonal tourism pressure variations and summer peak swings."`
+
+```text
+1. [USER INPUT]
+   "Analyze seasonal tourism pressure variations and summer peak swings."
+
+2. [AGENT PROMPT & THOUGHT]
+   User asks for temporal seasonal variance modeling (Winter trough to Summer peak).
+   Tool chosen: execute_temporal_pressure_query({})
+
+3. [MCP PROTOCOL]
+   POST http://mcp-server:8000/mcp
+   Body: {"jsonrpc": "2.0", "method": "tools/call", "params": {"name": "execute_temporal_pressure_query", "arguments": {}}}
+
+4. [DUCKDB ENGINE EXECUTION]
+   Evaluates quarterly seasonal multipliers across municipal aggregations:
+   - Winter off-peak (0.65x visitors)
+   - Spring ramp-up (1.05x visitors)
+   - Summer peak surge (1.55x visitors)
+   - Autumn normalization (0.85x visitors)
+   - Seasonal variance swing (Delta between Summer and Winter)
+
+5. [OBSERVATION RETURNED]
+   Quarterly pressure curves for all municipalities.
+
+6. [GEMMA SYNTHESIS]
+   Identifies destinations facing severe seasonal swings and advises on seasonal workforce/service allocation.
+```
+
+---
+
+## 4. Native `duckdb-ossie` Community Extension Integration
 
 In addition to our production FastAPI/FastMCP workflow, the platform supports the native **`duckdb-ossie`** community extension ([`iqea-ai/duckdb-ossie`](https://github.com/iqea-ai/duckdb-ossie)), which eliminates Python middleware by compiling semantic models directly in DuckDB's C++ core:
 

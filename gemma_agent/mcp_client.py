@@ -21,7 +21,13 @@ class MCPClient:
     """Client for communicating with the DEPLOYTOUR Model Context Protocol (MCP) server."""
 
     def __init__(self, base_url: Optional[str] = None):
-        self.base_url = (base_url or os.getenv("MCP_SERVER_URL", "http://mcp-server:8000")).rstrip("/")
+        url = base_url or os.getenv("MCP_SERVER_URL")
+        if not url:
+            if os.path.exists("/.dockerenv"):
+                url = "http://mcp-server:8000"
+            else:
+                url = "http://localhost:8000"
+        self.base_url = url.rstrip("/")
         self.rpc_url = f"{self.base_url}/mcp"
 
     def list_tools(self) -> List[Dict[str, Any]]:

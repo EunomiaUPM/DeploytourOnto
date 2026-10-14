@@ -203,14 +203,14 @@ def step_4_verify_mcp_server():
 def step_5_verify_gemma_llm_agent():
     print_section(
         5,
-        "Gemma LLM Agent Execution across 5 Semantic Test Scenarios via MCP",
-        what="Executes 5 real-world analytical scenarios where the Gemma Agent processes natural language questions, determines the required tool, executes the call, and synthesizes structured answers.",
-        why="Demonstrates the generative AI capabilities to act as an autonomous tourism analyst, bridging human queries into federated analytical joins."
+        "Gemma LLM Agent Execution across 9 Semantic & Analytical Test Scenarios via MCP",
+        what="Executes 9 real-world analytical scenarios covering semantic discovery, cross-ontology mappings, federated joins, ad-hoc SQL, overcapacity alerts, spatial distance, seasonal dynamics, SQL sanitization guardrails, and native Ossie compilation.",
+        why="Demonstrates the full generative AI and analytics capabilities of the agent across semantic, spatial, temporal, and security tiers."
     )
     try:
         from gemma_agent.test_cases import run_all_tests
         run_all_tests()
-        print("✓ [CRITERIA MET]: All 5 Gemma Agent test scenarios successfully passed.")
+        print("✓ [CRITERIA MET]: All 9 Gemma Agent test scenarios successfully passed.")
     except ImportError:
         print("[WARN] gemma_agent module not found in path, skipping in-process agent runner.")
 

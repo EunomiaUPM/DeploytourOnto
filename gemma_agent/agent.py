@@ -16,7 +16,7 @@ import os
 import json
 import re
 import requests
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 from .mcp_client import MCPClient
 
 GEMMA_SYSTEM_PROMPT = """You are an intelligent tourism analyst assistant powered by Google Gemma for the DEPLOYTOUR project.
@@ -60,7 +60,7 @@ MUNICIPALITY_MAP = {
 }
 
 class GemmaAgent:
-    """Autonomous Gemma LLM Agent with MCP tool-calling capabilities."""
+    """Autonomous Gemma LLM Agent with MCP tool-calling and real LLM endpoint support."""
 
     def __init__(self, mcp_client: Optional[MCPClient] = None, llm_base_url: Optional[str] = None):
         self.mcp = mcp_client or MCPClient()
@@ -93,13 +93,20 @@ class GemmaAgent:
     def execute(self, user_query: str) -> Dict[str, Any]:
         """
         Execute an end-to-end agent loop (prompting, tool execution, response synthesis).
-        If an external Gemma endpoint is provided via LLM_BASE_URL, it queries it.
-        Otherwise, it executes an autonomous deterministic Gemma reasoning engine.
+        If an external Gemma / OpenAI-compatible endpoint is provided via LLM_BASE_URL,
+        it attempts live inference with autonomous tool dispatch and synthesis.
+        Otherwise (or on network failure), it executes the deterministic reasoning engine.
         """
         self._refresh_tools()
         gemma_prompt = self._format_gemma_prompt(user_query)
 
-        # 1. Determine tool invocation and plan
+        # 1. Attempt Live LLM execution if configured
+        if self.llm_base_url:
+            llm_res = self._execute_live_llm(user_query, gemma_prompt)
+            if llm_res is not None:
+                return llm_res
+
+        # 2. Autonomous deterministic reasoning engine (default and robust fallback)
         tool_call, reasoning = self._plan_tool_call(user_query)
         tool_result = None
 
@@ -111,7 +118,7 @@ class GemmaAgent:
             except Exception as e:
                 tool_result = {"error": str(e)}
 
-        # 2. Synthesize final response
+        # 3. Synthesize structured response
         synthesis = self._synthesize_response(user_query, reasoning, tool_call, tool_result)
 
         return {
@@ -123,7 +130,102 @@ class GemmaAgent:
             "response": synthesis
         }
 
-    def _plan_tool_call(self, query: str) -> (Optional[Dict[str, Any]], str):
+    def _execute_live_llm(self, user_query: str, gemma_prompt: str) -> Optional[Dict[str, Any]]:
+        """Queries external Ollama/vLLM/OpenAI-compatible server at LLM_BASE_URL."""
+        endpoint = f"{self.llm_base_url}/chat/completions"
+        system_content = GEMMA_SYSTEM_PROMPT.format(tools_doc=self._format_tools_doc())
+
+        # Prepare tools schema in standard OpenAI format
+        openai_tools = [
+            {
+                "type": "function",
+                "function": {
+                    "name": t.get("name"),
+                    "description": t.get("description", ""),
+                    "parameters": t.get("inputSchema", {"type": "object", "properties": {}})
+                }
+            }
+            for t in self.tools
+        ]
+
+        payload = {
+            "model": self.llm_model,
+            "messages": [
+                {"role": "system", "content": system_content},
+                {"role": "user", "content": user_query}
+            ],
+            "tools": openai_tools if openai_tools else None,
+            "temperature": 0.1
+        }
+
+        try:
+            resp = requests.post(endpoint, json=payload, timeout=10)
+            if resp.status_code == 200:
+                data = resp.json()
+                message = data["choices"][0]["message"]
+                content = message.get("content", "")
+                tool_calls = message.get("tool_calls", [])
+
+                selected_tool = None
+                tool_result = None
+                thought = "Reasoned by live LLM model."
+
+                if tool_calls:
+                    tc = tool_calls[0]["function"]
+                    t_name = tc["name"]
+                    t_args = json.loads(tc.get("arguments", "{}"))
+                    selected_tool = {"name": t_name, "arguments": t_args}
+                    thought = f"Live LLM requested tool '{t_name}' with arguments {t_args}"
+                    tool_result = self.mcp.call_tool(t_name, t_args)
+                else:
+                    # Check if model returned ```call:tool_name in text
+                    m = re.search(r"```call:(\w+)\s*(\{.*?\})\s*```", content, re.DOTALL)
+                    if m:
+                        t_name = m.group(1)
+                        try:
+                            t_args = json.loads(m.group(2))
+                        except Exception:
+                            t_args = {}
+                        selected_tool = {"name": t_name, "arguments": t_args}
+                        thought = f"Live LLM parsed call block: '{t_name}'"
+                        tool_result = self.mcp.call_tool(t_name, t_args)
+
+                # Send observation back for synthesis if tool was invoked
+                final_text = content
+                if selected_tool and tool_result:
+                    followup_payload = {
+                        "model": self.llm_model,
+                        "messages": [
+                            {"role": "system", "content": system_content},
+                            {"role": "user", "content": user_query},
+                            {"role": "assistant", "content": content or f"Invoked `{selected_tool['name']}`"},
+                            {"role": "user", "content": f"Observation from tool `{selected_tool['name']}`:\n{json.dumps(tool_result, indent=2)}\n\nPlease synthesize an insightful, structured report."}
+                        ],
+                        "temperature": 0.2
+                    }
+                    try:
+                        f_resp = requests.post(endpoint, json=followup_payload, timeout=15)
+                        if f_resp.status_code == 200:
+                            final_text = f_resp.json()["choices"][0]["message"].get("content", "")
+                    except Exception:
+                        final_text = self._synthesize_response(user_query, thought, selected_tool, tool_result)
+                elif selected_tool and not final_text:
+                    final_text = self._synthesize_response(user_query, thought, selected_tool, tool_result)
+
+                return {
+                    "query": user_query,
+                    "gemma_prompt": gemma_prompt,
+                    "thought": thought,
+                    "tool_call": selected_tool,
+                    "tool_result": tool_result,
+                    "response": final_text or self._synthesize_response(user_query, thought, selected_tool, tool_result)
+                }
+        except Exception as e:
+            print(f"[gemma-agent] [WARN] Live LLM endpoint ({self.llm_base_url}) unreachable or failed: {e}. Falling back to deterministic Gemma reasoner.")
+
+        return None
+
+    def _plan_tool_call(self, query: str) -> Tuple[Optional[Dict[str, Any]], str]:
         """Analyze query intent and generate Gemma reasoning + tool call."""
         q = query.lower()
 
@@ -137,9 +239,33 @@ class GemmaAgent:
             thought = "User needs cross-ontology alignments and schema mappings. I should call `get_ontology_mappings` to retrieve correspondence."
             return {"name": "get_ontology_mappings", "arguments": {}}, thought
 
+        # Check for spatial proximity query
+        elif any(w in q for w in ["spatial", "distance", "proximity", "near", "radius", "km between", "meters"]):
+            detected = [info for city, info in MUNICIPALITY_MAP.items() if city in q]
+            m_code = detected[0][0] if detected else None
+            thought = f"User is querying spatial proximity between accommodation establishments and tourist POIs{' in ' + detected[0][1] if detected else ''}. I will call `execute_spatial_proximity_query`."
+            return {"name": "execute_spatial_proximity_query", "arguments": {"municipality_code": m_code, "max_distance_km": 10.0, "limit": 20}}, thought
+
+        # Check for temporal / seasonal pressure query
+        elif any(w in q for w in ["season", "seasonal", "winter", "summer", "autumn", "spring", "monthly variation", "seasonal swing", "temporal"]):
+            detected = [info for city, info in MUNICIPALITY_MAP.items() if city in q]
+            m_code = detected[0][0] if detected else None
+            thought = f"User is requesting temporal and seasonal tourism pressure analysis{' for ' + detected[0][1] if detected else ''}. I will call `execute_temporal_pressure_query`."
+            return {"name": "execute_temporal_pressure_query", "arguments": {"municipality_code": m_code}}, thought
+
+        # Check for native dynamic Ossie semantic compile
+        elif any(w in q for w in ["compile semantic", "ossie compile"]):
+            thought = "User requested native compilation of Ossie semantic metrics to ANSI SQL. Calling `compile_semantic_query`."
+            return {"name": "compile_semantic_query", "arguments": {"metrics": ["total_bed_capacity"], "dimensions": ["fiware_accommodations.municipality_code"]}}, thought
+
+        # Check for native dynamic Ossie semantic execution
+        elif any(w in q for w in ["execute semantic", "ossie query"]):
+            thought = "User requested executing native Ossie semantic query. Calling `execute_semantic_query`."
+            return {"name": "execute_semantic_query", "arguments": {"metrics": ["total_bed_capacity"], "dimensions": ["fiware_accommodations.municipality_code"]}}, thought
+
         # Check for specific municipality queries (e.g. Madrid, Barcelona, Girona, etc.)
         detected_cities = [info for city, info in MUNICIPALITY_MAP.items() if city in q]
-        
+
         # Test Case 4: Targeted comparison (Girona & Barcelona)
         if ("17079" in q or "08019" in q or (len(detected_cities) >= 2 and any(c[0] in ['17079', '08019'] for c in detected_cities))) and any(w in q for w in ["compare", "specifically", "targeted"]):
             thought = "User wants targeted metrics comparing Girona (17079) and Barcelona (08019). I should execute a targeted custom SQL query via `run_custom_duckdb_sql`."
@@ -212,7 +338,62 @@ class GemmaAgent:
         if not result:
             return "No data returned from the analytical federation."
 
-        # If result is from execute_federated_query or run_custom_duckdb_sql
+        if not tool_call:
+            return f"### Gemma Analysis Report\n\n**Reasoning:** {thought}\n\n```json\n{json.dumps(result, indent=2)}\n```"
+
+        tool_name = tool_call.get("name", "")
+
+        # Format Spatial Proximity Query Results
+        if tool_name == "execute_spatial_proximity_query" and isinstance(result, dict):
+            rows = result.get("results", [])
+            if not rows:
+                return f"### Gemma Spatial Analysis Report\n\n**Reasoning:** {thought}\n\nNo lodging establishments and POIs found within the requested distance."
+            table_lines = [
+                "| Accommodation | Category | Beds | Destination Resource | POI Type | Distance (km) |",
+                "|---|---|---|---|---|---|"
+            ]
+            for r in rows[:6]:
+                table_lines.append(f"| {r.get('accommodation_name')} | {r.get('accommodation_category')} | {r.get('capacity_beds')} | {r.get('denominacion_recurso')} | {r.get('tipo_espacio')} | **{r.get('distance_km')} km** |")
+
+            return (
+                f"### Gemma Spatial Proximity Analysis\n\n"
+                f"**Reasoning:** {thought}\n\n"
+                f"**Tool Invoked:** `{tool_name}` (Search radius: {result.get('max_distance_km', 10.0)} km)\n\n"
+                f"**Geospatial Join Highlights:** Found **{result.get('row_count', len(rows))}** spatial proximity pairings calculated using DuckDB's native `ST_Distance_Spheroid`:\n\n"
+                + "\n".join(table_lines)
+            )
+
+        # Format Temporal / Seasonal Pressure Results
+        if tool_name == "execute_temporal_pressure_query" and isinstance(result, dict):
+            rows = result.get("results", [])
+            if not rows:
+                return f"### Gemma Temporal Report\n\n**Reasoning:** {thought}\n\nNo temporal records found."
+            table_lines = [
+                "| Municipality | Beds | Winter Pressure | Spring | Summer Peak | Autumn | Seasonal Swing |",
+                "|---|---|---|---|---|---|---|"
+            ]
+            for r in rows[:5]:
+                table_lines.append(f"| {r.get('municipality_code')} | {r.get('bed_capacity')} | {r.get('winter_pressure_index')} | {r.get('spring_pressure_index')} | **{r.get('summer_peak_pressure_index')}** | {r.get('autumn_pressure_index')} | Δ {r.get('seasonal_variance_swing')} |")
+
+            return (
+                f"### Gemma Seasonal Tourism Pressure Analysis\n\n"
+                f"**Reasoning:** {thought}\n\n"
+                f"**Tool Invoked:** `{tool_name}`\n\n"
+                f"**Seasonal Dynamics:** Peak summer footfall generates high pressure swings compared to off-peak winter:\n\n"
+                + "\n".join(table_lines)
+            )
+
+        # Format Semantic Compilation Results
+        if tool_name == "compile_semantic_query" and isinstance(result, dict):
+            return (
+                f"### Gemma Semantic Query Compilation Report\n\n"
+                f"**Reasoning:** {thought}\n\n"
+                f"**Tool Invoked:** `{tool_name}`\n\n"
+                f"**Compiled ANSI SQL via Apache Ossie Engine:**\n\n"
+                f"```sql\n{result.get('compiled_sql', 'N/A')}\n```"
+            )
+
+        # Format Standard Federated Query / Custom SQL
         if isinstance(result, dict) and "results" in result:
             rows = result["results"]
             count = len(rows)

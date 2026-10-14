@@ -103,13 +103,17 @@ graph TD
   - `GET /tools/{name}` & `POST /tools/{name}`: Direct REST invocation for all tools.
   - Server-Sent Events (SSE) support for streaming tool execution.
 * **Exposed MCP Tools:**
-  1. `list_semantic_entities`: Returns registered entities, metrics, and dimensions from Apache Ossie.
+  1. `list_semantic_entities`: Returns registered entities, metrics, and dimensions from Apache Ossie (combining YAML specs and native `duckdb-ossie` engine discovery).
   2. `get_ontology_mappings`: Retrieves the cross-ontology alignment dictionary between FIWARE and SEGITTUR.
-  3. `execute_federated_query`: Executes the cross-ontology join in DuckDB (`engine/federated_query.sql`) and returns structured JSON rows.
-  4. `run_custom_duckdb_sql`: Allows executing arbitrary targeted SQL statements against `fiware_lake` and `segittur_lake` Iceberg views.
+  3. `execute_federated_query`: Executes the cross-ontology join in DuckDB (`engine/federated_query.sql`) with spatial distance and returns structured JSON rows.
+  4. `run_custom_duckdb_sql`: Executes read-only SQL queries with built-in SQL injection and mutation security sanitization.
+  5. `compile_semantic_query`: Compiles high-level semantic metrics into optimized ANSI SQL via native `duckdb-ossie`.
+  6. `execute_semantic_query`: Executes dynamic semantic queries directly over declared Ossie datasets and grain relationships.
+  7. `execute_spatial_proximity_query`: Computes spatial geodesic distances (`ST_Distance_Spheroid`) between accommodations and cultural/natural POIs.
+  8. `execute_temporal_pressure_query`: Simulates seasonal quarterly tourism pressure variations (Winter, Spring, Summer peak surge, Autumn).
 
 ### 2.5 Intelligence Layer: Google Gemma LLM Agent (`gemma_agent/`)
-* **Technology:** Python Gemma Agent supporting standard Gemma-2 instruction prompting and function calling.
+* **Technology:** Python Gemma Agent supporting standard Gemma-2 instruction prompting, autonomous tool-calling, and live LLM endpoints.
 * **Prompt Template:**
   ```text
   <start_of_turn>user
@@ -121,6 +125,10 @@ graph TD
   - get_ontology_mappings: ...
   - execute_federated_query: ...
   - run_custom_duckdb_sql: ...
+  - compile_semantic_query: ...
+  - execute_semantic_query: ...
+  - execute_spatial_proximity_query: ...
+  - execute_temporal_pressure_query: ...
   
   User query: {user_query}
   <end_of_turn>
@@ -129,8 +137,8 @@ graph TD
   {reasoning}
   ```
 * **Pluggability:**
-  - Autonomous embedded reasoner for instant zero-dependency execution.
-  - Fully compatible with external Gemma instances (e.g. Ollama via `LLM_BASE_URL=http://host.docker.internal:11434/v1`).
+  - **Live LLM Integration:** When configured with `LLM_BASE_URL` (e.g. Ollama via `http://host.docker.internal:11434/v1` or vLLM), queries the live model via standard chat completion APIs, parses tool calls, and synthesizes reports.
+  - **Autonomous Embedded Reasoner:** Zero-dependency fallback for deterministic testing and instant offline execution.
 
 ---
 
@@ -146,7 +154,7 @@ The repository provides a clean separation between **persistent infrastructure**
 +-------------------+--------------------------------------------------------------+
 | ./start_infra.sh  | Starts core infrastructure (data, Gravitino, MCP) in the bg. |
 | ./query.sh        | Runs Gemma Agent for ad-hoc queries or interactive REPL.     |
-| ./run_tests.sh    | Runs the 5 automated test scenarios against running infra.   |
+| ./run_tests.sh    | Runs the 9 automated test scenarios against running infra.   |
 | ./run_duckdb_ossie_test.sh | Runs containerized test for native duckdb-ossie extension. |
 | ./stop_infra.sh   | Tears down infrastructure containers and cleans volumes.    |
 | ./run.sh          | Complete one-command CI/CD run (build, test, verify).        |
@@ -183,6 +191,15 @@ The repository provides a clean separation between **persistent infrastructure**
 
 # Overcapacity anomaly detection
 ./query.sh "Find municipalities where monthly visitors exceed bed capacity by more than 50 times."
+
+# Spatial geodesic proximity analysis (GIS ST_Distance_Spheroid)
+./query.sh "Analyze spatial proximity and distance between accommodations and tourist POIs within 10 km radius."
+
+# Seasonal and temporal tourism dynamics
+./query.sh "Analyze seasonal tourism pressure variations and summer peak swings."
+
+# Native dynamic Apache Ossie SQL compilation
+./query.sh "Compile semantic metrics for total bed capacity using Ossie compile."
 ```
 
 #### Step 3: Interactive Gemma Session
@@ -242,7 +259,7 @@ For comprehensive benchmarks and architecture comparisons, refer to [DUCKDB_OSSI
 ## 4. Documentation & Presentation Assets
 
 * **[WORKFLOW.md](file:///Users/jsalvachua/OntoDeployTour/WORKFLOW.md):** Detailed end-to-end breakdown of the lifecycle of a query or problem, including sequence diagrams, intent parsing, semantic federation, and resilience checkpoints.
-* **[TESTING.md](file:///Users/jsalvachua/OntoDeployTour/TESTING.md):** Deep-dive guide into cross-ontology join mechanics, SQL calculations, the 5 Gemma test scenarios, and the native `duckdb-ossie` test suite.
+* **[TESTING.md](file:///Users/jsalvachua/OntoDeployTour/TESTING.md):** Deep-dive guide into cross-ontology join mechanics, SQL calculations, the 9 Gemma test scenarios, and the native `duckdb-ossie` test suite.
 * **[DUCKDB_OSSIE_TEST.md](file:///Users/jsalvachua/OntoDeployTour/DUCKDB_OSSIE_TEST.md):** Dedicated technical evaluation report on the Iqea Technologies `duckdb-ossie` and `duckdb_mcp` community extensions.
 * **[DEPLOYTOUR_PoC_Architecture_and_Testing.pptx](file:///Users/jsalvachua/OntoDeployTour/DEPLOYTOUR_PoC_Architecture_and_Testing.pptx):** Comprehensive 15-slide executive and technical PowerPoint presentation detailing the architecture, semantic alignment, verification results, query workflow, and `duckdb-ossie` evaluation.
 
@@ -285,7 +302,7 @@ OntoDeployTour/
 │   ├── agent.py                    # Gemma LLM Agent with Gemma-2 template & reasoning
 │   ├── mcp_client.py               # MCP JSON-RPC client
 │   ├── cli.py                      # Interactive & one-shot CLI entrypoint
-│   ├── test_cases.py               # 5 automated test scenarios
+│   ├── test_cases.py               # 9 automated analytical & security test scenarios
 │   └── Dockerfile                  # Gemma agent container
 ├── test/
 │   ├── test_duckdb_ossie.py        # Python test runner for duckdb-ossie & duckdb_mcp

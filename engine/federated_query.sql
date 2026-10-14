@@ -33,7 +33,8 @@ SELECT
     ROUND(SUM(f.capacity_beds * f.occupancy_rate), 1) AS estimated_active_guests,
     SUM(s.visitantes_mensuales) AS monthly_visitor_footfall,
     ROUND(SUM(s.visitantes_mensuales * s.gasto_medio_diario_eur), 2) AS estimated_monthly_spend_eur,
-    ROUND(CAST(SUM(s.visitantes_mensuales) AS DOUBLE) / NULLIF(SUM(f.capacity_beds) * 30.0, 0), 2) AS tourism_pressure_index
+    ROUND(CAST(SUM(s.visitantes_mensuales) AS DOUBLE) / NULLIF(SUM(f.capacity_beds) * 30.0, 0), 2) AS tourism_pressure_index,
+    ROUND(AVG(ST_Distance_Spheroid(ST_Point(f.longitude, f.latitude), ST_Point(s.longitud, s.latitud)) / 1000.0), 2) AS avg_poi_distance_km
 FROM fiware_lake f
 JOIN segittur_lake s 
   ON f.municipality_code = s.codigo_ine_municipio

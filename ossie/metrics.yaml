@@ -46,3 +46,21 @@ metrics:
       - "fiware_accommodations"
       - "segittur_destinos"
     data_type: "FLOAT"
+
+  - id: "AveragePoiDistanceKm"
+    name: "Average POI Distance (km)"
+    description: "Average geodesic distance in kilometers between accommodation establishments and destination resources"
+    expression: "AVG(ST_Distance_Spheroid(ST_Point(longitude, latitude), ST_Point(longitud, latitud)) / 1000.0)"
+    entities:
+      - "fiware_accommodations"
+      - "segittur_destinos"
+    data_type: "FLOAT"
+
+  - id: "SummerPeakTourismPressureIndex"
+    name: "Summer Peak Tourism Pressure Index"
+    description: "Simulated peak seasonal pressure index during high-season summer surge"
+    expression: "(visitantes_mensuales * 1.55) / NULLIF(SUM(capacity_beds) * 30.0, 0)"
+    entities:
+      - "fiware_accommodations"
+      - "segittur_destinos"
+    data_type: "FLOAT"

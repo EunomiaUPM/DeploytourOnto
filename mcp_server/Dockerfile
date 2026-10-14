@@ -22,7 +22,7 @@ COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Pre-install duckdb extensions
-RUN python3 -c "import duckdb; con = duckdb.connect(); con.execute('INSTALL iceberg; INSTALL spatial;')"
+RUN python3 -c "import duckdb; con = duckdb.connect(); con.execute('INSTALL iceberg; INSTALL spatial; INSTALL ossie FROM community; INSTALL duckdb_mcp FROM community;')"
 
 COPY server.py ./
 
