@@ -109,6 +109,11 @@ def step_3_execute_duckdb_federated_query():
         print(f"  > Executing: {stmt}")
         con.execute(stmt)
 
+    try:
+        con.execute("SET geometry_always_xy = true;")
+    except Exception:
+        pass
+
     select_stmt = statements[-1]
     print(f"\n[TRACE] Executing aggregation and Tourism Pressure Index query:")
     print(f"  > Spatial join key: fiware.municipality_code = segittur.codigo_ine_municipio")

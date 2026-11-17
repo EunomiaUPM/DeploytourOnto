@@ -95,6 +95,10 @@ def get_duckdb() -> duckdb.DuckDBPyConnection:
 
         try:
             _db_con.execute("INSTALL spatial; LOAD spatial;")
+            try:
+                _db_con.execute("SET geometry_always_xy = true;")
+            except Exception:
+                pass
         except Exception as e:
             print(f"[mcp-server] Warning loading spatial extension: {e}")
 

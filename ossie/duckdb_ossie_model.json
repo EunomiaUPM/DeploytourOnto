@@ -1,12 +1,14 @@
 {
   "_comment": "Copyright 2024-2026 Universidad Polit\u00e9cnica de Madrid / Deploytour. Licensed under Apache 2.0.",
   "version": "0.2.0.dev0",
-  "name": "deploytour_tourism_model",
-  "description": "DEPLOYTOUR Cross-Ontology Semantic Model bridging FIWARE Smart Data Models and SEGITTUR/Schema.org",
-  "ai_context": {
-    "instructions": "Use this semantic model for Spanish tourism analytics. It federates accommodation capacity from FIWARE with tourist footfall and spend from SEGITTUR."
-  },
-  "datasets": [
+  "semantic_model": [
+    {
+      "name": "deploytour_tourism_model",
+      "description": "DEPLOYTOUR Cross-Ontology Semantic Model bridging FIWARE Smart Data Models and SEGITTUR/Schema.org",
+      "ai_context": {
+        "instructions": "Use this semantic model for Spanish tourism analytics. It federates accommodation capacity from FIWARE with tourist footfall and spend from SEGITTUR."
+      },
+      "datasets": [
     {
       "name": "fiware_accommodations",
       "source": "memory.main.fiware_accommodations",
@@ -277,12 +279,14 @@
       },
       "description": "Estimated total monthly tourist expenditure in Euros",
       "datatype": "Double",
-      "ai_context": {
-        "synonyms": [
-          "total tourist spend",
-          "monthly economic impact"
-        ]
-      }
+          "ai_context": {
+            "synonyms": [
+              "total tourist spend",
+              "monthly economic impact"
+            ]
+          }
+        }
+      ]
     }
   ]
 }
