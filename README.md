@@ -20,7 +20,31 @@ limitations under the License.
 
 ![BabelFish — Universal Translator for Data Spaces](assets/babelfish-emblem.svg)
 
-This repository hosts the containerized, local-first Proof of Concept (PoC) developed by **Universidad Politécnica de Madrid (UPM)** for **DEPLOYTOUR**. It demonstrates how Destination Management Organizations (DMOs) and AI agents can compute cross-domain sustainability KPIs (such as the **Tourism Pressure Index**) across sovereign, incompatible data silos:
+---
+
+## Context & Motivation: The European Tourism Data Space Challenge
+
+Within the **DEPLOYTOUR** European Tourism Data Space, the **Universidad Politécnica de Madrid (UPM)** team addresses a fundamental challenge: **how can independent tourism stakeholders compute shared sustainability KPIs in real time without giving up data sovereignty or writing brittle point-to-point integrations?**
+
+### The Business Use Case ("Alice's Challenge")
+Imagine **Alice**, a Destination Management Organization (DMO) manager who needs an accurate, real-time **Tourism Pressure Index** before a City Council deadline:
+
+$$\text{Tourism Pressure Index} = \frac{\text{Tourists} + \text{Day-trippers}}{\text{Residents} + \text{Beds}}$$
+
+The data required to compute this KPI belongs to four independent, sovereign local owners who keep their databases at origin:
+- **John (City Hall):** Population & census (`SEGITTUR` — `municipio_id`, `poblacion`)
+- **Paul (Hotels):** Bed capacity & occupancy (`FIWARE` — `refMunicipality`, `beds`)
+- **George (Mobility):** Passenger flows (`GTFS` — `stop_city`, `pax_count`)
+- **Ringo (Rentals):** Tourist rentals (`REST API` — `cod_ine`, `plazas_vt`)
+
+### Why Traditional Approaches Fail
+1. **Centralized Cloud Monolith (Blocked):** Copying all hotel and city databases into one central data lake strips local owners of data sovereignty. *Data Space Golden Rule: bring the computation to the data, never copy raw data into a central monolith.*
+2. **$N \times M$ Integration Explosion:** All four providers refer to the same municipality using four incompatible field names (`municipio_id`, `refMunicipality`, `stop_city`, `cod_ine`). Custom point-to-point adapters grow quadratically ($N \times M = 80$ connectors for 20 providers $\times$ 4 apps), whereas mapping each source once to a canonical **OSI** hub ($N + M$) cuts integration overhead by **~70%**.
+3. **The Classic Semantic Web Gap (RDF/OWL):** Operational tourism systems run on SQL, Parquet/Iceberg, and REST APIs, while BI tools and AI agents need instant tabular answers. Heavy W3C RDF/OWL triple stores introduce high latency and impedance mismatch.
+4. **Non-Deterministic LLM Loops:** Letting an LLM agent guess SQL `JOIN`s on the fly over unbalanced ontologies produces different KPIs on every run (hallucinations). Explicit **OSI / Apache OSSIE** YAML contracts guarantee **100% repeatable, auditable** results.
+
+### What This PoC Demonstrates
+This repository hosts the containerized, local-first Proof of Concept (PoC) implementing that **Vocabulary Hub + OSI Semantic Layer** over two sovereign Apache Iceberg lakehouses:
 
 1. **Lakehouse A — FIWARE Smart Data Models (Hotels / Supply):** Physical accommodation infrastructure, bed capacity, and occupancy (`TouristDestination`, `Accommodation`).
 2. **Lakehouse B — SEGITTUR / Schema.org (City / Demand):** Tourist points of interest, visitor footfall, and daily expenditure (`PuntoDeInteresTuristico`, `DestinoTuristicoFlujo`).
