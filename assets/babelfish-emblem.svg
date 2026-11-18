@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 200" width="420" height="200" fill="none" role="img" aria-label="BabelFish Semantic Circuit Emblem">
+  <rect width="420" height="200" rx="18" fill="#091526"/>
+  <rect x="2" y="2" width="416" height="196" rx="16" stroke="#1E3A5F" stroke-width="2"/>
+  <g transform="translate(30, 8)">
+    <path d="M 35 85 L 15 55 L 15 115 Z" fill="#0EA5E9" stroke="#FACC15" stroke-width="2.5"/>
+    <path d="M 35 85 C 75 30, 180 25, 255 68 L 335 25 L 320 85 L 335 145 L 255 102 C 180 145, 75 140, 35 85 Z"
+          fill="#0A2540" stroke="#FACC15" stroke-width="3"/>
+    <circle cx="95" cy="70" r="18" fill="#091526" stroke="#FACC15" stroke-width="2.5"/>
+    <circle cx="95" cy="70" r="8" fill="#38BDF8"/>
+    <path d="M 115 70 L 175 70 L 210 85 L 315 85" stroke="#38BDF8" stroke-width="2.5" stroke-dasharray="8 4"/>
+    <path d="M 110 92 L 165 112 L 235 112 L 315 60" stroke="#10B981" stroke-width="2.5" stroke-dasharray="8 4"/>
+    <path d="M 135 50 L 200 50 L 255 78 L 315 112" stroke="#F59E0B" stroke-width="2"/>
+    <rect x="150" y="62" width="32" height="16" rx="4" fill="#0077C8" stroke="#7DD3FC" stroke-width="1.5"/>
+    <text x="166" y="73" text-anchor="middle" fill="#FFFFFF" font-family="monospace" font-size="8" font-weight="700">OSI</text>
+    <rect x="205" y="103" width="38" height="16" rx="4" fill="#059669" stroke="#6EE7B7" stroke-width="1.5"/>
+    <text x="224" y="114" text-anchor="middle" fill="#FFFFFF" font-family="monospace" font-size="8" font-weight="700">OSSIE</text>
+  </g>
+  <text x="210" y="182" text-anchor="middle" fill="#7DD3FC" font-family="monospace" font-size="11" font-weight="700">"BabelFish" — Universal Translator for Data Spaces</text>
+</svg>

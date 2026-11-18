@@ -18,6 +18,8 @@ limitations under the License.
 
 **A "BabelFish" for Federated Tourism Data Spaces** — deterministic, real-time semantic interoperability without moving or centralizing source databases.
 
+![BabelFish — Universal Translator for Data Spaces](assets/babelfish-emblem.svg)
+
 This repository hosts the containerized, local-first Proof of Concept (PoC) developed by **Universidad Politécnica de Madrid (UPM)** for **DEPLOYTOUR**. It demonstrates how Destination Management Organizations (DMOs) and AI agents can compute cross-domain sustainability KPIs (such as the **Tourism Pressure Index**) across sovereign, incompatible data silos:
 
 1. **Lakehouse A — FIWARE Smart Data Models (Hotels / Supply):** Physical accommodation infrastructure, bed capacity, and occupancy (`TouristDestination`, `Accommodation`).
